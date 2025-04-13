@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LCG Test Interface</title>
+    <!-- Collegamento al file CSS esterno -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="game-container">
+
+        <!-- ==================== Area Giocatore 2 (Avversario) ==================== -->
+        <div class="player-area opponent-area" id="player-area-2">
+            <!-- Informazioni Giocatore 2 -->
+            <div class="player-info" id="info-player-2">
+                <span>Giocatore 2</span>
+                <span>Vita: <span id="hp-player-2">20</span></span>
+                <span>Risorse: <span id="res-player-2">0</span>/<span id="max-res-player-2">0</span></span>
+                <span>Mazzo: <span id="deck-count-2">--</span></span>
+                <span>Cimitero: <span id="graveyard-count-2">0</span></span>
+            </div>
+            <!-- Mano Giocatore 2 -->
+            <div class="hand" id="hand-player-2">
+                <!-- Le carte in mano (dell'avversario, potrebbero essere nascoste o mostrate come placeholder) verranno aggiunte qui da JS -->
+                <div class="card-placeholder"></div> <!-- Esempio placeholder -->
+                <div class="card-placeholder"></div> <!-- Esempio placeholder -->
+            </div>
+            <!-- Campo Giocatore 2 -->
+            <div class="field" id="field-player-2">
+                <!-- Le carte sul campo (giocate dall'avversario) verranno aggiunte qui da JS -->
+            </div>
+        </div>
+
+        <!-- ==================== Area Centrale (Log e Controlli) ==================== -->
+        <div class="center-area">
+            <div class="game-log" id="game-log">
+                <p>Log di Gioco:</p>
+                <!-- I messaggi verranno aggiunti qui da JS -->
+            </div>
+            <div class="game-controls">
+                <button id="end-turn-button">Passa Turno</button>
+                <p>Turno Giocatore: <span id="turn-indicator">1</span></p>
+                <!-- Potresti aggiungere qui altri controlli o indicatori di fase -->
+            </div>
+        </div>
+
+        <!-- ==================== Area Giocatore 1 (Tu) ==================== -->
+        <div class="player-area current-player-area" id="player-area-1">
+             <!-- Campo Giocatore 1 -->
+             <div class="field" id="field-player-1">
+                <!-- Le carte sul campo (giocate da te) verranno aggiunte qui da JS -->
+            </div>
+             <!-- Mano Giocatore 1 -->
+            <div class="hand" id="hand-player-1">
+                <!-- Le carte in mano (tue) verranno aggiunte qui da JS -->
+            </div>
+            <!-- Informazioni e Zone Giocatore 1 -->
+            <div class="player-info-bottom">
+                <div class="player-stats" id="info-player-1">
+                    <span>Giocatore 1</span>
+                    <span>Vita: <span id="hp-player-1">20</span></span>
+                    <span>Risorse: <span id="res-player-1">0</span>/<span id="max-res-player-1">0</span></span>
+                </div>
+                <div class="deck-graveyard">
+                    <div class="deck" id="deck-player-1" title="Clicca per pescare (se possibile)">
+                        Mazzo (<span id="deck-count-1">--</span>)
+                    </div>
+                    <div class="graveyard" id="graveyard-player-1" title="Visualizza Cimitero">
+                        Cimitero (<span id="graveyard-count-1">0</span>)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modale/Popup per visualizzare dettagli (es. Cimitero) -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">×</span>
+            <h3 id="modal-title">Dettagli</h3>
+            <div id="modal-body">
+                <!-- Contenuto del modale verrà inserito qui da JS -->
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==================== Script JS ==================== -->
+    <!-- File dati carte (modificabile) -->
+    <script src="cards.js"></script>
+    <!-- File logica del gioco -->
+    <script src="game.js"></script>
+
+</body>
+</html>

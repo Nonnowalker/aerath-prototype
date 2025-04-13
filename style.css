@@ -1,0 +1,324 @@
+/* Reset base e stile generale */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+    background-color: #1a1a1a; /* Sfondo quasi nero */
+    color: #e0e0e0; /* Testo grigio chiaro */
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Allinea all'inizio verticalmente */
+    min-height: 100vh;
+}
+
+.game-container {
+    width: 95%;
+    max-width: 1200px; /* Limita larghezza massima */
+    margin-top: 20px; /* Spazio dall'alto */
+    margin-bottom: 20px; /* Spazio dal basso */
+    display: flex;
+    flex-direction: column; /* Impila le aree verticalmente */
+    border: 1px solid #444; /* Bordo sottile per il contenitore */
+    background-color: #222; /* Sfondo leggermente più chiaro per il contenitore */
+}
+
+/* Aree Giocatore */
+.player-area {
+    padding: 10px;
+    border-bottom: 1px solid #444;
+    display: flex;
+    flex-direction: column; /* Elementi interni (info, mano, campo) in colonna */
+    min-height: 200px; /* Altezza minima per visibilità */
+}
+
+.opponent-area {
+    /* L'ordine degli elementi è già corretto in HTML (info, mano, campo) */
+}
+
+.current-player-area {
+     /* L'ordine degli elementi è già corretto in HTML (campo, mano, info-bottom) */
+     border-bottom: none; /* Rimuove il bordo inferiore dell'ultimo elemento */
+}
+
+
+/* Informazioni Giocatore */
+.player-info {
+    display: flex;
+    gap: 15px; /* Spazio tra gli elementi info */
+    padding-bottom: 10px;
+    font-size: 0.9em;
+    color: #aaa;
+    border-bottom: 1px dashed #444; /* Separatore */
+    margin-bottom: 10px;
+}
+.player-info span {
+    background-color: #333;
+    padding: 2px 5px;
+    border-radius: 3px;
+}
+
+.player-info-bottom {
+    display: flex;
+    justify-content: space-between; /* Allinea stats a sx e deck/gy a dx */
+    align-items: center; /* Allinea verticalmente */
+    padding-top: 10px;
+     border-top: 1px dashed #444; /* Separatore */
+    margin-top: 10px;
+}
+
+.player-stats {
+     display: flex;
+    gap: 15px;
+    font-size: 0.9em;
+    color: #aaa;
+}
+.player-stats span {
+    background-color: #333;
+    padding: 2px 5px;
+    border-radius: 3px;
+}
+
+
+/* Mano e Campo */
+.hand, .field {
+    display: flex;
+    flex-wrap: wrap; /* Permette alle carte di andare a capo */
+    gap: 8px; /* Spazio tra le carte */
+    min-height: 110px; /* Altezza minima per contenere carte */
+    padding: 5px;
+    background-color: rgba(0, 0, 0, 0.2); /* Sfondo leggermente diverso */
+    border-radius: 4px;
+    margin-bottom: 10px; /* Spazio sotto mano/campo */
+}
+
+.opponent-area .hand {
+    /* Potresti voler dare uno stile diverso alla mano dell'avversario (es. carte coperte) */
+    /* min-height: 80px; */ /* Altezza ridotta se mostri solo placeholder */
+}
+
+.field {
+    min-height: 120px; /* Campo leggermente più alto */
+    border: 1px solid #555;
+}
+
+
+/* Stile Base Carte (verrà migliorato da JS) */
+.card, .card-placeholder {
+    width: 70px;
+    height: 100px;
+    border: 1px solid #888;
+    background-color: #555;
+    color: #fff;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Spazio per nome/costo in alto e stats in basso */
+    font-size: 0.7em;
+    padding: 4px;
+    box-sizing: border-box; /* Padding e border inclusi nella width/height */
+    position: relative; /* Per posizionamento assoluto interno se serve */
+    cursor: pointer; /* Indica interattività */
+    overflow: hidden; /* Nasconde testo troppo lungo */
+}
+
+.card:hover {
+    border-color: #eee;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+/* Stili specifici dentro la carta (da popolare con JS) */
+.card .card-name {
+    font-weight: bold;
+    white-space: nowrap;
+}
+.card .card-cost {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    background-color: rgba(0, 0, 0, 0.6);
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+.card .card-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8em;
+    font-weight: bold;
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 1px 3px;
+    border-radius: 3px;
+}
+.card .card-art {
+    position: absolute;
+    top: 20px; /* Sotto nome/costo */
+    left: 4px;
+    right: 4px;
+    bottom: 20px; /* Sopra stats */
+    background-color: #777; /* Placeholder per immagine */
+    background-size: cover;
+    background-position: center;
+    border-radius: 3px;
+}
+.card .card-ability {
+    display: none; /* Non mostriamo abilità direttamente sulla carta piccola */
+}
+
+
+/* Placeholder specifico per mano avversario */
+.card-placeholder {
+    background-color: #404040;
+    border-style: dashed;
+    cursor: default;
+}
+.card-placeholder:hover {
+     border-color: #888; /* Nessun effetto hover speciale */
+     box-shadow: none;
+}
+
+
+/* Mazzo e Cimitero */
+.deck-graveyard {
+    display: flex;
+    gap: 10px;
+}
+
+.deck, .graveyard {
+    width: 70px;
+    height: 100px;
+    border: 2px solid #666;
+    background-color: #3a3a3a;
+    color: #ccc;
+    border-radius: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-size: 0.8em;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.deck:hover, .graveyard:hover {
+    background-color: #4a4a4a;
+    border-color: #999;
+}
+
+/* Area Centrale */
+.center-area {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; /* Allinea log e controlli in alto */
+    padding: 10px;
+    border-bottom: 1px solid #444;
+    background-color: #2a2a2a;
+}
+
+.game-log {
+    width: 70%;
+    height: 100px; /* Altezza fissa per il log */
+    background-color: #111;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 8px;
+    overflow-y: scroll; /* Abilita scroll verticale se il contenuto eccede */
+    font-size: 0.8em;
+    color: #bbb;
+}
+.game-log p {
+    margin: 0 0 5px 0;
+    padding: 0;
+}
+
+.game-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+#end-turn-button {
+    padding: 10px 15px;
+    font-size: 1em;
+    cursor: pointer;
+    background-color: #555;
+    color: #fff;
+    border: 1px solid #777;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+#end-turn-button:hover {
+    background-color: #666;
+}
+#end-turn-button:disabled {
+    background-color: #333;
+    color: #777;
+    cursor: not-allowed;
+}
+
+
+/* Stile Modale */
+.modal {
+    display: none; /* Nascosto di default */
+    position: fixed; /* Rimane fisso durante lo scroll */
+    z-index: 1000; /* Sopra tutto il resto */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; /* Abilita scroll se il contenuto è troppo */
+    background-color: rgba(0, 0, 0, 0.7); /* Sfondo semi-trasparente */
+    justify-content: center; /* Centra orizzontalmente */
+    align-items: center; /* Centra verticalmente */
+}
+
+.modal.active {
+     display: flex; /* Mostra il modale quando ha la classe active */
+}
+
+.modal-content {
+    background-color: #2d2d2d;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 5px;
+    position: relative;
+    color: #e0e0e0;
+}
+
+.close-button {
+    color: #aaa;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: #fff;
+    text-decoration: none;
+}
+
+#modal-body {
+    margin-top: 15px;
+    max-height: 400px; /* Limita altezza corpo modale */
+    overflow-y: auto; /* Scroll per contenuto lungo */
+     display: flex; /* Utile se mostriamo carte */
+     flex-wrap: wrap;
+     gap: 10px;
+}
+
+/* Evidenzia giocatore attivo (opzionale) */
+.player-area.active-turn {
+    outline: 2px solid gold;
+    box-shadow: 0 0 10px gold;
+}
