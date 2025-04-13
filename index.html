@@ -3,117 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LCG Test Interface</title>
-    <!-- Collegamento al file CSS esterno -->
+    <title>Aerath LCG - Grid Test</title> <!-- Titolo aggiornato -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+    <!-- Contenitore Principale Orizzontale -->
     <div class="game-container">
 
-        <!-- ==================== Area Giocatore 2 (Avversario) ==================== -->
+        <!-- ==================== Area Giocatore 1 (Sinistra) ==================== -->
+        <div class="player-area current-player-area" id="player-area-1">
+
+            <!-- Info Giocatore 1 (in alto) -->
+            <div class="player-info" id="info-player-1">
+                <span>Giocatore 1</span>
+                <span>Vita: <span id="hp-player-1">20</span></span>
+                <span>Risorse: <span id="res-player-1">0</span>/<span id="max-res-player-1">0</span></span>
+                 <!-- Spostato conteggio mazzo/cimitero qui per visibilità -->
+                 <span>Mazzo: <span id="deck-count-1">--</span></span>
+                 <span>Cimitero: <span id="graveyard-count-1">0</span></span>
+            </div>
+
+            <!-- Contenuto Principale Giocatore 1 (Campo + Mano/Zone) -->
+            <div class="player-main-content">
+
+                <!-- Campo di Battaglia Giocatore 1 (GRID) -->
+                <div class="field" id="field-player-1">
+                    <!-- 18 Celle (6 righe x 3 colonne) generate da JS o manualmente -->
+                    <!-- Esempio manuale (verrà poi fatto da JS): -->
+                    <div class="grid-cell" data-row="0" data-col="0"></div>
+                    <div class="grid-cell" data-row="0" data-col="1"></div>
+                    <div class="grid-cell" data-row="0" data-col="2"></div>
+                    <div class="grid-cell" data-row="1" data-col="0"></div>
+                    <div class="grid-cell" data-row="1" data-col="1"></div>
+                    <div class="grid-cell" data-row="1" data-col="2"></div>
+                    <div class="grid-cell" data-row="2" data-col="0"></div>
+                    <div class="grid-cell" data-row="2" data-col="1"></div>
+                    <div class="grid-cell" data-row="2" data-col="2"></div>
+                    <div class="grid-cell" data-row="3" data-col="0"></div>
+                    <div class="grid-cell" data-row="3" data-col="1"></div>
+                    <div class="grid-cell" data-row="3" data-col="2"></div>
+                    <div class="grid-cell" data-row="4" data-col="0"></div>
+                    <div class="grid-cell" data-row="4" data-col="1"></div>
+                    <div class="grid-cell" data-row="4" data-col="2"></div>
+                    <div class="grid-cell" data-row="5" data-col="0"></div>
+                    <div class="grid-cell" data-row="5" data-col="1"></div>
+                    <div class="grid-cell" data-row="5" data-col="2"></div>
+                    <!-- Fine Celle Griglia G1 -->
+                </div>
+
+                <!-- Zona Mano / Deck / Cimitero Giocatore 1 (Verticale) -->
+                <div class="hand-deck-graveyard-zone">
+                    <div class="hand" id="hand-player-1">
+                        <!-- Carte in mano G1 verranno aggiunte qui da JS -->
+                    </div>
+                    <div class="deck-graveyard">
+                        <div class="deck" id="deck-player-1" title="Mazzo Giocatore 1">
+                            Mazzo (<span id="deck-count-1-display">--</span>) <!-- Nuovo ID per span conteggio qui -->
+                        </div>
+                        <div class="graveyard" id="graveyard-player-1" data-player-id="1" title="Visualizza Cimitero Giocatore 1">
+                            Cimitero (<span id="graveyard-count-1-display">0</span>) <!-- Nuovo ID per span conteggio qui -->
+                        </div>
+                    </div>
+                </div>
+
+            </div> <!-- Fine player-main-content G1 -->
+
+             <!-- Controlli Gioco (in basso G1) -->
+             <div class="player-controls-info">
+                <div class="player-game-controls">
+                     <button id="show-log-button" title="Mostra Log di Gioco">Mostra Log</button>
+                     <div class="turn-indicator-area">Turno: <span id="turn-indicator">1</span></div>
+                     <button id="end-turn-button">Passa Turno</button>
+                </div>
+             </div>
+
+        </div> <!-- Fine Area Giocatore 1 -->
+
+
+        <!-- ==================== Area Giocatore 2 (Destra) ==================== -->
         <div class="player-area opponent-area" id="player-area-2">
-            <!-- Informazioni Giocatore 2 -->
+
+            <!-- Info Giocatore 2 (in alto) -->
             <div class="player-info" id="info-player-2">
                 <span>Giocatore 2</span>
                 <span>Vita: <span id="hp-player-2">20</span></span>
                 <span>Risorse: <span id="res-player-2">0</span>/<span id="max-res-player-2">0</span></span>
                 <span>Mazzo: <span id="deck-count-2">--</span></span>
-                <span>Cimitero: <span id="graveyard-count-2">0</span></span> <!-- Conteggio rimane, cliccabilità viene da JS -->
+                <span>Cimitero: <span id="graveyard-count-2">0</span></span>
             </div>
-            <!-- Mano Giocatore 2 -->
-            <div class="hand" id="hand-player-2">
-                <!-- Placeholder verranno aggiunti qui da JS -->
-            </div>
-            <!-- Campo Giocatore 2 -->
-            <div class="field" id="field-player-2">
-                <!-- Le carte sul campo verranno aggiunte qui da JS -->
-            </div>
-        </div>
 
-        <!-- ==================== Area Centrale (Log e Controlli) ==================== -->
-        <div class="center-area">
-             <!-- == Rimosso vecchio game-log div == -->
-            <div class="game-controls">
-                <!-- NUOVO Bottone per aprire modale log -->
-                <button id="show-log-button" title="Mostra Log di Gioco">Mostra Log</button>
+             <!-- Contenuto Principale Giocatore 2 (Campo + Mano/Zone) -->
+             <div class="player-main-content">
 
-                <p>Turno Giocatore: <span id="turn-indicator">1</span></p>
-                <button id="end-turn-button">Passa Turno</button>
-            </div>
-        </div>
-
-        <!-- ==================== Area Giocatore 1 (Tu) ==================== -->
-        <div class="player-area current-player-area" id="player-area-1">
-             <!-- Campo Giocatore 1 -->
-             <div class="field" id="field-player-1">
-                <!-- Le carte sul campo verranno aggiunte qui da JS -->
-            </div>
-             <!-- Mano Giocatore 1 -->
-            <div class="hand" id="hand-player-1">
-                <!-- Le carte in mano verranno aggiunte qui da JS -->
-            </div>
-            <!-- Informazioni e Zone Giocatore 1 -->
-            <div class="player-info-bottom">
-                <div class="player-stats" id="info-player-1">
-                    <span>Giocatore 1</span>
-                    <span>Vita: <span id="hp-player-1">20</span></span>
-                    <span>Risorse: <span id="res-player-1">0</span>/<span id="max-res-player-1">0</span></span>
-                </div>
-                <div class="deck-graveyard">
-                    <div class="deck" id="deck-player-1" title="Mazzo"> <!-- Tolto riferimento a 'clicca per pescare' -->
-                        Mazzo (<span id="deck-count-1">--</span>)
+                 <!-- Zona Mano / Deck / Cimitero Giocatore 2 (Verticale) -->
+                 <!-- NOTA: Ordine invertito per avere zone a sinistra e campo a destra -->
+                 <div class="hand-deck-graveyard-zone">
+                    <div class="hand" id="hand-player-2">
+                         <!-- Placeholder mano G2 verranno aggiunti qui da JS -->
                     </div>
-                    <!-- Aggiunto data-player-id per JS -->
-                    <div class="graveyard" id="graveyard-player-1" data-player-id="1" title="Visualizza Cimitero Giocatore 1">
-                        Cimitero (<span id="graveyard-count-1">0</span>)
+                    <div class="deck-graveyard">
+                        <div class="deck deck-inactive" id="deck-player-2" title="Mazzo Giocatore 2"> <!-- Mazzo G2 non interagibile -->
+                             Mazzo (<span id="deck-count-2-display">--</span>)
+                        </div>
+                        <div class="graveyard" id="graveyard-player-2" data-player-id="2" title="Visualizza Cimitero Giocatore 2">
+                            Cimitero (<span id="graveyard-count-2-display">0</span>)
+                        </div>
                     </div>
-                     <!-- Aggiunto div Cimitero Giocatore 2 (non cliccabile di base, ma con ID per info) -->
-                     <div class="graveyard opponent-graveyard" id="graveyard-info-player-2" data-player-id="2" title="Visualizza Cimitero Giocatore 2"> <!-- ID cambiato in info, aggiunto data-player-id -->
-                         Cimitero (<span id="graveyard-count-2-display">0</span>) <!-- ID span cambiato -->
-                     </div>
                 </div>
+
+                 <!-- Campo di Battaglia Giocatore 2 (GRID) -->
+                 <div class="field" id="field-player-2">
+                     <!-- 18 Celle (6 righe x 3 colonne) generate da JS o manualmente -->
+                     <!-- Esempio manuale: -->
+                    <div class="grid-cell" data-row="0" data-col="0"></div>
+                    <div class="grid-cell" data-row="0" data-col="1"></div>
+                    <div class="grid-cell" data-row="0" data-col="2"></div>
+                    <div class="grid-cell" data-row="1" data-col="0"></div>
+                    <div class="grid-cell" data-row="1" data-col="1"></div>
+                    <div class="grid-cell" data-row="1" data-col="2"></div>
+                    <div class="grid-cell" data-row="2" data-col="0"></div>
+                    <div class="grid-cell" data-row="2" data-col="1"></div>
+                    <div class="grid-cell" data-row="2" data-col="2"></div>
+                    <div class="grid-cell" data-row="3" data-col="0"></div>
+                    <div class="grid-cell" data-row="3" data-col="1"></div>
+                    <div class="grid-cell" data-row="3" data-col="2"></div>
+                    <div class="grid-cell" data-row="4" data-col="0"></div>
+                    <div class="grid-cell" data-row="4" data-col="1"></div>
+                    <div class="grid-cell" data-row="4" data-col="2"></div>
+                    <div class="grid-cell" data-row="5" data-col="0"></div>
+                    <div class="grid-cell" data-row="5" data-col="1"></div>
+                    <div class="grid-cell" data-row="5" data-col="2"></div>
+                     <!-- Fine Celle Griglia G2 -->
+                 </div>
+
+            </div> <!-- Fine player-main-content G2 -->
+
+            <!-- Controlli/Info Giocatore 2 (in basso, potrebbero essere vuoti o con info aggiuntive) -->
+            <div class="player-controls-info">
+                 <!-- Spazio vuoto o per eventuali log/info specifici dell'avversario -->
             </div>
-        </div>
 
-    </div>
+        </div> <!-- Fine Area Giocatore 2 -->
 
-    <!-- ==================== Modali ==================== -->
+    </div> <!-- Fine game-container -->
 
-    <!-- Modale per visualizzare Cimitero -->
-    <!-- ID Modale Cambiato -->
-    <div id="graveyard-modal" class="modal">
-        <div class="modal-content">
-            <!-- ID Bottone Cambiato per specificità (ma useremo ancora la classe) -->
-            <span class="close-button" data-modal-id="graveyard-modal">×</span>
-            <!-- ID Titolo Cambiato -->
-            <h3 id="modal-title-graveyard">Cimitero</h3>
-             <!-- ID Corpo Cambiato -->
-            <div id="modal-body-graveyard">
-                <!-- Contenuto del modale cimitero verrà inserito qui da JS -->
-            </div>
-        </div>
-    </div>
 
-    <!-- NUOVO Modale per visualizzare Log -->
-    <div id="log-modal" class="modal">
-        <div class="modal-content">
-            <!-- ID Bottone Cambiato per specificità -->
-            <span class="close-button" data-modal-id="log-modal">×</span>
-             <!-- ID Titolo Cambiato -->
-            <h3 id="modal-title-log">Log di Gioco</h3>
-            <!-- ID Corpo Cambiato -->
-            <div id="modal-body-log">
-                <!-- I messaggi di log verranno inseriti qui da JS -->
-            </div>
-        </div>
-    </div>
-
+    <!-- ==================== Modali (fuori dal container principale) ==================== -->
+    <div id="graveyard-modal" class="modal"> <div class="modal-content"> <span class="close-button" data-modal-id="graveyard-modal">×</span> <h3 id="modal-title-graveyard">Cimitero</h3> <div id="modal-body-graveyard"></div> </div> </div>
+    <div id="log-modal" class="modal"> <div class="modal-content"> <span class="close-button" data-modal-id="log-modal">×</span> <h3 id="modal-title-log">Log di Gioco</h3> <div id="modal-body-log"></div> </div> </div>
 
     <!-- ==================== Script JS ==================== -->
-    <!-- File dati carte (modificabile) -->
     <script src="cards.js"></script>
-    <!-- File logica del gioco -->
     <script src="game.js"></script>
 
 </body>
