@@ -11,7 +11,7 @@ const cardDatabase = [
     {
       id: "c001",
       nome: "Ratto Gigante",
-      illustrazione: "images/c001.jpg",
+      illustrazione: "images/1.jpg",
       forza: 1,
       punti_ferita: 1,
       costo: 1,
@@ -21,7 +21,7 @@ const cardDatabase = [
     {
       id: "c002",
       nome: "Guardiano del Cancello",
-      illustrazione: "images/c002.jpg",
+      illustrazione: "images/2.jpg",
       forza: 0,
       punti_ferita: 4,
       costo: 2,
@@ -32,7 +32,7 @@ const cardDatabase = [
     {
       id: "c003",
       nome: "Esploratore Elfico",
-      illustrazione: "images/c003.jpg",
+      illustrazione: "images/3.jpg",
       forza: 2,
       punti_ferita: 1,
       costo: 2,
@@ -63,7 +63,7 @@ const cardDatabase = [
     {
       id: "c004",
       nome: "Guerriero Veterano",
-      illustrazione: "images/c004.jpg",
+      illustrazione: "images/4.jpg",
       forza: 3,
       punti_ferita: 3,
       costo: 3,
@@ -72,7 +72,7 @@ const cardDatabase = [
     {
       id: "c005",
       nome: "Golem d'Ossa",
-      illustrazione: "images/c005.jpg",
+      illustrazione: "images/5.jpg",
       forza: 4,
       punti_ferita: 5,
       costo: 5,
@@ -83,7 +83,7 @@ const cardDatabase = [
     {
       id: "m001",
       nome: "Dardo Incantato",
-      illustrazione: "images/m001.jpg",
+      illustrazione: "images/17.jpg",
       forza: null,
       punti_ferita: null,
       costo: 1,

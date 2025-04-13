@@ -1,5 +1,5 @@
 // File: game.js
-// (Versione finale con classi CSS, deck dinamici, effetti decentralizzati)
+// (Versione finale con classi CSS, deck dinamici, effetti decentralizzati - Corretto)
 
 // ==================== 1. Riferimenti Elementi DOM ====================
 const turnIndicator = document.getElementById('turn-indicator');
@@ -37,22 +37,19 @@ const closeButtons = document.querySelectorAll('.close-button');
 const modals = document.querySelectorAll('.modal');
 
 // ==================== 2. Stato del Gioco ====================
-// NOTA: Per gestire correttamente danno/morte creature, 'field'
-// dovrebbe diventare un array di oggetti: es. { id: "c001", instanceId: "...", currentHp: 1 }
 let gameState = {
     currentPlayerId: 1,
     turnNumber: 1,
     players: [
-        { id: 1, hp: 20, maxResources: 0, currentResources: 0, deck: [], hand: [], field: [], graveyard: [] }, // field: array di ID stringa (semplificato)
-        { id: 2, hp: 20, maxResources: 0, currentResources: 0, deck: [], hand: [], field: [], graveyard: [] }  // field: array di ID stringa (semplificato)
+        { id: 1, hp: 20, maxResources: 0, currentResources: 0, deck: [], hand: [], field: [], graveyard: [] },
+        { id: 2, hp: 20, maxResources: 0, currentResources: 0, deck: [], hand: [], field: [], graveyard: [] }
     ],
     gameEnded: false,
     winner: null,
-    selectingTarget: null, // Info per l'azione di targeting { sourceCardId, targetInfo: { prompt, filter, onTargetSelected } }
+    selectingTarget: null,
     potentialTargets: [],
-    pendingActionInfo: null // Info per annullare { type, cardId, originalHandIndex, costPaid }
+    pendingActionInfo: null
 };
-
 
 // ==================== 3. Funzioni Utilità ====================
 function shuffleArray(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[array[i], array[j]] = [array[j], array[i]]; } }
@@ -61,15 +58,6 @@ function getPlayerState(playerId) { return gameState.players.find(p => p.id === 
 function getOpponentState(currentPlayerId) { const opponentId = currentPlayerId === 1 ? 2 : 1; return getPlayerState(opponentId); }
 // Assumiamo che getCardData e getAllCardIds siano definite in cards.js
 // e accessibili globalmente
-// const getCardData = window.getCardData;
-// const getAllCardIds = window.getAllCardIds;
-
-/**
- * Crea il contesto da passare alle funzioni definite nelle carte.
- * @param {number} playerId - ID del giocatore che esegue l'azione.
- * @param {string} cardId - ID della carta coinvolta.
- * @returns {object} Oggetto contesto.
- */
 function createCardContext(playerId, cardId) {
     return {
         gameState: gameState,
@@ -78,14 +66,12 @@ function createCardContext(playerId, cardId) {
         addLog: addLogMessage,
         getPlayerState: getPlayerState,
         getOpponentState: getOpponentState,
-        getCardData: getCardData, // Passa la funzione helper globale
-        drawCard: drawCard, // Passa la funzione drawCard globale
-        executeEffect: executeEffect, // Passa il gestore effetti generico
-        startTargetSelection: startTargetSelection, // Passa la funzione per iniziare targeting
-        // Potresti aggiungere altre funzioni helper se servono nelle carte
+        getCardData: getCardData,
+        drawCard: drawCard,
+        executeEffect: executeEffect,
+        startTargetSelection: startTargetSelection,
     };
 }
-
 
 // ==================== 4. Funzioni di Rendering ====================
 function renderCard(cardId, location = 'hand') { const cardData = getCardData(cardId); const cardDiv = document.createElement('div'); cardDiv.classList.add('card'); cardDiv.dataset.cardId = cardId; cardDiv.dataset.location = location; const cardName = document.createElement('div'); cardName.classList.add('card-name'); cardName.textContent = cardData.nome; const cardCost = document.createElement('div'); cardCost.classList.add('card-cost'); cardCost.textContent = cardData.costo; const cardArt = document.createElement('div'); cardArt.classList.add('card-art'); const cardAbility = document.createElement('div'); cardAbility.classList.add('card-ability'); cardAbility.textContent = cardData.description; cardDiv.appendChild(cardName); cardDiv.appendChild(cardCost); cardDiv.appendChild(cardArt); /* cardDiv.appendChild(cardAbility); */ if (cardData.forza !== null || cardData.punti_ferita !== null) { const cardStats = document.createElement('div'); cardStats.classList.add('card-stats'); const forzaSpan = document.createElement('span'); forzaSpan.textContent = cardData.forza !== null ? cardData.forza : '-'; const pfSpan = document.createElement('span'); pfSpan.textContent = cardData.punti_ferita !== null ? cardData.punti_ferita : '-'; cardStats.appendChild(forzaSpan); cardStats.appendChild(pfSpan); cardDiv.appendChild(cardStats); } let tooltipText = `${cardData.nome} (${cardData.costo})\n`; if (cardData.forza !== null) tooltipText += `F:${cardData.forza} `; if (cardData.punti_ferita !== null) tooltipText += `PF:${cardData.punti_ferita}`; if (cardData.description) tooltipText += `\n${cardData.description}`; if (cardData.keywords && cardData.keywords.length > 0) tooltipText += `\nKeywords: ${cardData.keywords.join(', ')}`; cardDiv.title = tooltipText.trim(); const setFallbackText = () => { cardArt.textContent = 'Immagine non disponibile'; cardArt.classList.add('card-art-fallback'); }; const removeFallbackStyle = () => { cardArt.classList.remove('card-art-fallback'); cardArt.textContent = ''; }; if (cardData.illustrazione) { const img = new Image(); img.onload = () => { removeFallbackStyle(); cardArt.style.backgroundImage = `url('${cardData.illustrazione}')`; }; img.onerror = () => { cardArt.style.backgroundImage = 'none'; setFallbackText(); }; img.src = cardData.illustrazione; } else { setFallbackText(); } if (!gameState.gameEnded) { if (location === 'hand' && gameState.currentPlayerId === 1 && getPlayerState(1)?.hand.includes(cardId)) { cardDiv.addEventListener('click', handleHandCardClick); } else if (location === 'field') { cardDiv.addEventListener('click', handleFieldCardClick); } } return cardDiv; }
@@ -96,135 +82,76 @@ function renderGame() { renderPlayerInfo(1); renderPlayerInfo(2); renderHand(1);
 
 
 // ==================== 5. Logica Azioni di Gioco ====================
-
 function startTurn(playerId) { if (gameState.gameEnded) return; console.log(`Inizio turno ${gameState.turnNumber} per Giocatore ${playerId}`); addLogMessage(`Inizio turno per Giocatore ${playerId}.`); gameState.currentPlayerId = playerId; const player = getPlayerState(playerId); if (!player) return; if (player.maxResources < 10) { player.maxResources++; } player.currentResources = player.maxResources; drawCard(playerId); renderGame(); if (playerId === 2) { endTurnButton.disabled = true; addLogMessage("Giocatore 2 sta pensando..."); setTimeout(runOpponentTurn, 1500); } else { endTurnButton.disabled = !!gameState.selectingTarget; } }
 function drawCard(playerId) { const player = getPlayerState(playerId); if (!player || gameState.gameEnded) return; if (player.deck.length > 0) { const drawnCardId = player.deck.shift(); player.hand.push(drawnCardId); addLogMessage(`Giocatore ${playerId} pesca una carta.`); console.log(`Giocatore ${playerId} pesca ${drawnCardId}`); } else { player.hp -= 1; addLogMessage(`Giocatore ${playerId} ha finito le carte e subisce 1 danno da fatica! HP: ${player.hp}`); console.warn(`Giocatore ${playerId} ha tentato di pescare da un mazzo vuoto.`); } }
 function handleEndTurnClick() { if (gameState.gameEnded || gameState.currentPlayerId !== 1 || gameState.selectingTarget) { console.warn("Impossibile passare il turno ora."); return; } console.log("Giocatore 1 passa il turno."); addLogMessage("Giocatore 1 termina il suo turno."); gameState.turnNumber++; startTurn(2); }
-
-/**
- * Gestisce il click su una carta nella mano del Giocatore 1 (Refactored).
- * Utilizza la logica decentralizzata definita in cards.js.
- * @param {Event} event L'evento click.
- */
 function handleHandCardClick(event) {
     if (gameState.gameEnded || gameState.currentPlayerId !== 1 || gameState.selectingTarget) return;
-
     const cardElement = event.currentTarget;
     const cardId = cardElement.dataset.cardId;
     const cardData = getCardData(cardId);
     const player = getPlayerState(1);
     if (!player || !cardData) return;
-
     console.log(`Tentativo di giocare: ${cardData.nome} (ID: ${cardId})`);
-
-    // 1. Verifica Costo Risorse
     if (player.currentResources >= cardData.costo) {
-
-        // 2. Controlla se la carta richiede un target tramite getTargetInfo
         const hasTargeting = typeof cardData.getTargetInfo === 'function';
-
         if (hasTargeting) {
-            // --- AZIONE CHE RICHIEDE TARGET ---
             console.log(`${cardData.nome} richiede un bersaglio.`);
-
-            // Paga costo e rimuovi da mano (salva info per annullamento)
             player.currentResources -= cardData.costo;
             const cardIndex = player.hand.indexOf(cardId);
             if (cardIndex > -1) {
                  player.hand.splice(cardIndex, 1);
                  gameState.pendingActionInfo = { type: 'playCardFromHand', cardId: cardId, originalHandIndex: cardIndex, costPaid: cardData.costo };
                  console.log("Info per annullamento salvate:", gameState.pendingActionInfo);
-
-                 // Prepara il contesto per getTargetInfo
                  const context = createCardContext(player.id, cardId);
-                 // Ottieni le info di targeting dalla carta
                  const targetInfo = cardData.getTargetInfo(context);
-
-                 // Avvia la selezione target usando le info dalla carta
                  startTargetSelection(cardId, targetInfo);
-
-                 // Aggiorna UI per mostrare stato di selezione
                  renderGame();
             } else {
                 console.error("Carta cliccata non trovata nella mano!", cardId, player.hand);
-                player.currentResources += cardData.costo; // Restituisci risorse
+                player.currentResources += cardData.costo;
             }
-
         } else {
-            // --- AZIONE CHE NON RICHIEDE TARGET ---
             console.log(`${cardData.nome} non richiede bersaglio. Azione immediata.`);
-
-            // Paga costo e rimuovi da mano
             player.currentResources -= cardData.costo;
             const cardIndex = player.hand.indexOf(cardId);
             if (cardIndex > -1) { player.hand.splice(cardIndex, 1); }
             else { console.error("Carta cliccata non trovata nella mano!", cardId, player.hand); player.currentResources += cardData.costo; return; }
-
-            // Determina destinazione (campo o cimitero)
             const isCreature = cardData.forza !== null || cardData.punti_ferita !== null;
             if (isCreature) {
-                player.field.push(cardId); // O oggetto se field gestisce oggetti
+                player.field.push(cardId);
                 addLogMessage(`Giocatore 1 gioca ${cardData.nome}.`);
             } else {
                 addLogMessage(`Giocatore 1 lancia ${cardData.nome}.`);
-                // Le magie senza target vanno subito al cimitero dopo l'effetto onPlay
-                // (lo spostamento è gestito da executeEffect se necessario)
             }
-
-            // Esegui l'effetto onPlay, se presente
             executeEffect(cardId, 'onPlay', player.id);
-
-            // Le magie senza target vanno al cimitero dopo l'effetto
             if (!isCreature) {
                  player.graveyard.push(cardId);
             }
-
-            // Aggiorna l'interfaccia
             renderGame();
         }
-
     } else {
         addLogMessage(`Risorse insufficienti per giocare ${cardData.nome} (costa ${cardData.costo}, hai ${player.currentResources}).`);
         console.log("Risorse insufficienti.");
     }
 }
-
-
-/**
- * Gestore generico per eseguire effetti definiti nelle carte.
- * @param {string} cardId - ID della carta il cui effetto va eseguito.
- * @param {string} trigger - Es. 'onPlay', 'onDeath', ecc.
- * @param {number} playerId - ID del giocatore contesto dell'effetto.
- * @param {object} [additionalContext={}] - Eventuali dati aggiuntivi specifici del trigger.
- */
 function executeEffect(cardId, trigger, playerId, additionalContext = {}) {
     const cardData = getCardData(cardId);
-    // Cerca la funzione corrispondente al trigger nei dati della carta
     const effectFunction = cardData && cardData[trigger];
-
     if (typeof effectFunction === 'function') {
         console.log(`Esecuzione effetto ${trigger} per ${cardData.nome}`);
-        // Crea il contesto base
         const context = createCardContext(playerId, cardId);
-        // Aggiungi eventuali dati specifici del trigger
         Object.assign(context, additionalContext);
         try {
-            // Esegui la funzione definita nella carta!
             effectFunction(context);
         } catch (error) {
             console.error(`Errore durante l'esecuzione dell'effetto ${trigger} per ${cardId}:`, error);
             addLogMessage(`! Errore nell'effetto di ${cardData.nome} !`);
         }
     } else {
-        // Nessuna funzione definita per questo trigger su questa carta
         // console.log(`Nessun effetto ${trigger} definito per ${cardData?.nome || cardId}`);
     }
 }
-
-/**
- * Gestisce il click su una carta sul campo (Refactored).
- * @param {Event} event L'evento click.
- */
 function handleFieldCardClick(event) {
     if (gameState.gameEnded) return;
     const cardElement = event.currentTarget;
@@ -232,121 +159,164 @@ function handleFieldCardClick(event) {
     const cardData = getCardData(cardId);
     if (!cardData) return;
     const ownerId = cardElement.closest('.player-area').id.includes('player-area-1') ? 1 : 2;
-
-    // --- Gestione Selezione Target ---
     if (gameState.selectingTarget) {
         if (gameState.potentialTargets.includes(cardElement)) {
             console.log(`Target valido selezionato: ${cardData.nome} (ID: ${cardId})`);
-
-            // Prepara il contesto per la callback onTargetSelected
-            const context = createCardContext(1, gameState.selectingTarget.sourceCardId); // Assumiamo G1 triggera
-
-            // Esegui la callback definita nella carta (onTargetSelected)
+            const context = createCardContext(1, gameState.selectingTarget.sourceCardId);
             if (typeof gameState.selectingTarget.targetInfo.onTargetSelected === 'function') {
                 try {
                      gameState.selectingTarget.targetInfo.onTargetSelected(cardElement, context);
                 } catch (error) {
                     console.error(`Errore durante l'esecuzione di onTargetSelected per ${gameState.selectingTarget.sourceCardId}:`, error);
                     addLogMessage(`! Errore nell'effetto target di ${getCardData(gameState.selectingTarget.sourceCardId)?.nome || '?'} !`);
-                     // Potrebbe essere saggio annullare l'azione qui se onTargetSelected fallisce
                      cancelTargetSelection();
-                     return; // Esce per evitare pulizia standard se fallisce
+                     return;
                 }
             } else {
                 console.warn(`Nessuna funzione onTargetSelected definita per ${gameState.selectingTarget.sourceCardId}`);
-                 // L'azione ha consumato risorse ma non fa nulla sul target... Potrebbe essere un errore di design?
-                 // Considera se annullare o meno in questo caso.
             }
-
-            // Pulisci lo stato di selezione (azione completata)
             gameState.selectingTarget = null;
             gameState.potentialTargets = [];
-            gameState.pendingActionInfo = null; // Azione completata, non più pendente
+            gameState.pendingActionInfo = null;
             clearHighlights();
-            renderGame(); // Aggiorna UI dopo l'azione
-
+            renderGame();
         } else {
             console.log("Target non valido cliccato.");
             addLogMessage("Bersaglio non valido.");
         }
-        return; // Esce dopo aver gestito il click durante la selezione target
-    }
-    // --- Fine Gestione Selezione Target ---
-
-    console.log(`Cliccato sulla carta in campo: ${cardData.nome} (ID: ${cardId}, Proprietario: ${ownerId})`);
-    addLogMessage(`Cliccato su ${cardData.nome} sul campo.`);
-    // Qui andrebbe la logica per iniziare attacco, attivare abilità da campo, etc.
-}
-
-
-/**
- * Inizia il processo di selezione del bersaglio (Refactored).
- * @param {string} sourceCardId - ID della carta che richiede il target.
- * @param {object} targetInfo - Oggetto restituito da cardData.getTargetInfo().
- */
-function startTargetSelection(sourceCardId, targetInfo) {
-    console.log("Inizio selezione target per:", sourceCardId, "Info:", targetInfo);
-
-    if (!targetInfo || typeof targetInfo.filter !== 'function' || typeof targetInfo.onTargetSelected !== 'function') {
-        console.error(`Informazioni di targeting non valide o incomplete fornite per ${sourceCardId}`);
-        cancelTargetSelection(); // Annulla l'azione pendente
         return;
     }
-
-    // Verifica l'azione pendente (già fatto in handleHandCardClick, ma doppia sicurezza)
+    console.log(`Cliccato sulla carta in campo: ${cardData.nome} (ID: ${cardId}, Proprietario: ${ownerId})`);
+    addLogMessage(`Cliccato su ${cardData.nome} sul campo.`);
+}
+function startTargetSelection(sourceCardId, targetInfo) {
+    console.log("Inizio selezione target per:", sourceCardId, "Info:", targetInfo);
+    if (!targetInfo || typeof targetInfo.filter !== 'function' || typeof targetInfo.onTargetSelected !== 'function') {
+        console.error(`Informazioni di targeting non valide o incomplete fornite per ${sourceCardId}`);
+        cancelTargetSelection();
+        return;
+    }
     if (!gameState.pendingActionInfo || gameState.pendingActionInfo.cardId !== sourceCardId) {
          console.error("Tentativo di startTargetSelection senza un'azione pendente valida!");
          cancelTargetSelection();
          return;
     }
-
-    // Imposta lo stato di targeting
-    gameState.selectingTarget = {
-        sourceCardId: sourceCardId,
-        targetInfo: targetInfo // Salva l'oggetto completo con prompt, filter, onTargetSelected
-    };
+    gameState.selectingTarget = { sourceCardId: sourceCardId, targetInfo: targetInfo };
     gameState.potentialTargets = [];
     clearHighlights();
-
-    // Prepara contesto per il filtro
-    const filterContext = createCardContext(1, sourceCardId); // Assumiamo G1
-
-    // Identifica target validi usando il filtro della carta
+    const filterContext = createCardContext(1, sourceCardId);
     const allFieldCards = document.querySelectorAll('#field-player-1 .card, #field-player-2 .card');
     allFieldCards.forEach(cardElement => {
         let isValid = false;
-        try {
-             isValid = targetInfo.filter(cardElement, filterContext);
-        } catch (error) {
-            console.error(`Errore durante l'esecuzione del filtro target per ${sourceCardId}:`, error);
-        }
+        try { isValid = targetInfo.filter(cardElement, filterContext); }
+        catch (error) { console.error(`Errore durante l'esecuzione del filtro target per ${sourceCardId}:`, error); }
         if (isValid) {
             cardElement.classList.add('potential-target');
             gameState.potentialTargets.push(cardElement);
         }
     });
-    // Aggiungere qui logica per bersagliare giocatori se necessario
-
-    // Controlla se ci sono target
-    if (gameState.potentialTargets.length === 0 /* && !playerTargetsValid */) {
+    if (gameState.potentialTargets.length === 0) {
         addLogMessage(`Nessun bersaglio valido trovato per ${getCardData(sourceCardId).nome}. Azione annullata.`);
         console.log("Nessun target valido trovato, annullamento automatico.");
         cancelTargetSelection();
     } else {
         addLogMessage(`${targetInfo.prompt || `Seleziona un bersaglio per ${getCardData(sourceCardId).nome}.`} (Click destro o ESC per annullare)`);
-        renderGame(); // Aggiorna UI per mostrare highlight e stato selezione
+        renderGame();
     }
 }
-
 function clearHighlights() { document.querySelectorAll('.potential-target').forEach(el => el.classList.remove('potential-target')); }
-
 function cancelTargetSelection() { console.log("Tentativo di annullare selezione target..."); if (gameState.selectingTarget && gameState.pendingActionInfo) { console.log("Annullamento in corso per:", gameState.pendingActionInfo); addLogMessage(`Azione per ${getCardData(gameState.pendingActionInfo.cardId).nome} annullata.`); const player = getPlayerState(1); const { type, cardId, originalHandIndex, costPaid } = gameState.pendingActionInfo; if (player && type === 'playCardFromHand') { player.currentResources += costPaid; console.log(`Risorse restituite: +${costPaid}, Totale: ${player.currentResources}`); player.hand.splice(originalHandIndex, 0, cardId); console.log(`Carta ${cardId} restituita alla mano indice ${originalHandIndex}`); } gameState.selectingTarget = null; gameState.potentialTargets = []; gameState.pendingActionInfo = null; clearHighlights(); renderGame(); } else { console.log("Nessuna azione di selezione target da annullare."); } }
 
 
 // ==================== 6. Logica Avversario (IA Semplice) ====================
-// (Questa IA è molto semplice e NON usa ancora gli effetti decentralizzati
-//  per le sue azioni, andrebbe migliorata)
-function runOpponentTurn() { if (gameState.gameEnded || gameState.currentPlayerId !== 2) return; const player = getPlayerState(2); const opponent = getPlayerState(1); if (!player || !opponent) return; addLogMessage("Giocatore 2 (IA) sta agendo..."); const playCardAI = () => { let cardPlayed = false; const playableCards = player.hand .map((id, index) => ({ id, index, data: getCardData(id) })) .filter(c => player.currentResources >= c.data.costo) .sort((a, b) => b.data.costo - a.data.costo); if (playableCards.length > 0) { const cardToPlay = playableCards[0]; const cardId = cardToPlay.id; const cardData = cardToPlay.data; // --- Logica IA Semplificata --- // NON gestisce target // Paga costo e rimuovi da mano player.currentResources -= cardData.costo; player.hand.splice(cardToPlay.index, 1); // Determina destinazione e logga const isCreature = cardData.forza !== null || cardData.punti_ferita !== null; if (isCreature) { player.field.push(cardId); addLogMessage(`Giocatore 2 gioca ${cardData.nome}.`); // Esegui effetto onPlay (se esiste) executeEffect(cardId, 'onPlay', player.id); } else { addLogMessage(`Giocatore 2 lancia ${cardData.nome}.`); // Esegui effetto onPlay (se esiste) executeEffect(cardId, 'onPlay', player.id); // Magia va al cimitero player.graveyard.push(cardId); } cardPlayed = true; renderGame(); } return cardPlayed; }; const attackAI = () => { let didAttack = false; const attackers = player.field .map(id => getCardData(id)) .filter(data => data && data.forza > 0 && !(data.keywords && data.keywords.includes('Lento'))); // Esempio: non attacca se 'Lento' (servirebbe gestione stato per Lento) if (attackers.length > 0) { const attacker = attackers[0]; const damage = attacker.forza; opponent.hp -= damage; addLogMessage(`${attacker.nome} (IA) attacca Giocatore 1 per ${damage} danni. HP G1: ${opponent.hp}`); didAttack = true; renderGame(); } return didAttack; }; setTimeout(() => { if (gameState.gameEnded || gameState.currentPlayerId !== 2) return; const played = playCardAI(); if (!played) addLogMessage("Giocatore 2 non gioca carte."); setTimeout(() => { if (gameState.gameEnded || gameState.currentPlayerId !== 2) return; const attacked = attackAI(); if (!attacked && player.field.some(id => getCardData(id).forza > 0)) { /* addLogMessage("Le creature del Giocatore 2 non attaccano."); */ } setTimeout(() => { if (gameState.gameEnded || gameState.currentPlayerId !== 2) return; console.log("Giocatore 2 (IA) termina il turno."); addLogMessage("Giocatore 2 termina il suo turno."); if (!gameState.gameEnded) { startTurn(1); } }, 700); }, 800); }, 500); }
+function runOpponentTurn() {
+    if (gameState.gameEnded || gameState.currentPlayerId !== 2) return;
+    const player = getPlayerState(2);
+    const opponent = getPlayerState(1);
+    if (!player || !opponent) return;
+    addLogMessage("Giocatore 2 (IA) sta agendo...");
+
+    const playCardAI = () => {
+        let cardPlayed = false;
+        const playableCards = player.hand
+            .map((id, index) => ({ id, index, data: getCardData(id) }))
+            .filter(c => c.data && player.currentResources >= c.data.costo) // Verifica che cardData esista
+            .sort((a, b) => b.data.costo - a.data.costo);
+
+        if (playableCards.length > 0) {
+            const cardToPlay = playableCards[0];
+            const cardId = cardToPlay.id;
+            const cardData = cardToPlay.data;
+
+            // IA NON GESTISCE TARGETING QUI - Semplificazione
+            if (typeof cardData.getTargetInfo === 'function') {
+                console.log(`IA: Salta ${cardData.nome} perchè richiede target (non implementato in IA).`);
+                return false; // L'IA salta le carte con target per ora
+            }
+
+            player.currentResources -= cardData.costo;
+            player.hand.splice(cardToPlay.index, 1);
+
+            const isCreature = cardData.forza !== null || cardData.punti_ferita !== null;
+            if (isCreature) {
+                player.field.push(cardId);
+                addLogMessage(`Giocatore 2 gioca ${cardData.nome}.`);
+                executeEffect(cardId, 'onPlay', player.id);
+            } else {
+                addLogMessage(`Giocatore 2 lancia ${cardData.nome}.`);
+                executeEffect(cardId, 'onPlay', player.id);
+                player.graveyard.push(cardId);
+            }
+            cardPlayed = true;
+            renderGame();
+        }
+        return cardPlayed;
+    };
+
+    const attackAI = () => {
+        let didAttack = false;
+        const attackers = player.field
+            .map(id => getCardData(id))
+            .filter(data => data && data.forza > 0 && !(data.keywords && data.keywords.includes('Lento'))); // Aggiunto check per 'Lento'
+
+        if (attackers.length > 0) {
+            const attacker = attackers[0];
+            const damage = attacker.forza;
+            opponent.hp -= damage;
+            addLogMessage(`${attacker.nome} (IA) attacca Giocatore 1 per ${damage} danni. HP G1: ${opponent.hp}`);
+            didAttack = true;
+            renderGame();
+        }
+        return didAttack;
+    };
+
+    setTimeout(() => {
+        if (gameState.gameEnded || gameState.currentPlayerId !== 2) return;
+        const played = playCardAI();
+        if (!played && playableCards.length > 0) { // Se c'erano carte giocabili ma non le ha giocate (es. solo target)
+             addLogMessage("Giocatore 2 non gioca carte (possibili solo azioni con target?).");
+        } else if (!played) {
+            addLogMessage("Giocatore 2 non ha carte giocabili.");
+        }
+
+        setTimeout(() => {
+            if (gameState.gameEnded || gameState.currentPlayerId !== 2) return;
+            const attacked = attackAI();
+            if (!attacked && player.field.some(id => getCardData(id)?.forza > 0)) { // Aggiunto ?. per sicurezza
+                // Non logghiamo nulla se non attacca, rende il log meno verboso
+            }
+
+            setTimeout(() => {
+                if (gameState.gameEnded || gameState.currentPlayerId !== 2) return;
+                console.log("Giocatore 2 (IA) termina il turno.");
+                addLogMessage("Giocatore 2 termina il suo turno.");
+                if (!gameState.gameEnded) {
+                    startTurn(1);
+                }
+            }, 700);
+        }, 800);
+    }, 500);
+} // <-- PARENTESI GRAFFA CORRETTA QUI
 
 
 // ==================== 7. Gestione Modale ====================
@@ -362,9 +332,29 @@ function addEventListeners() { endTurnButton.addEventListener('click', handleEnd
 
 
 // ==================== 9. Inizializzazione Gioco ====================
-function initGame() { console.log("Inizializzazione gioco..."); const allCardIds = typeof getAllCardIds === 'function' ? getAllCardIds() : null; if (!allCardIds || allCardIds.length === 0) { console.error("Impossibile inizializzare: getAllCardIds non trovata o non restituisce ID in cards.js!"); alert("Errore critico: Impossibile caricare le carte."); return; } const deckP1 = []; const deckP2 = []; const copiesPerCard = 2; for (let i = 0; i < copiesPerCard; i++) { deckP1.push(...allCardIds); deckP2.push(...allCardIds); } gameState = { currentPlayerId: 1, turnNumber: 1, players: [ { id: 1, hp: 20, maxResources: 0, currentResources: 0, deck: [...deckP1], hand: [], field: [], graveyard: [] }, { id: 2, hp: 20, maxResources: 0, currentResources: 0, deck: [...deckP2], hand: [], field: [], graveyard: [] } ], gameEnded: false, winner: null, selectingTarget: null, potentialTargets: [], pendingActionInfo: null }; addLogMessage("Benvenuto nel Test LCG!"); shuffleArray(gameState.players[0].deck); shuffleArray(gameState.players[1].deck); console.log(`Mazzi mescolati: G1 (${gameState.players[0].deck.length} carte), G2 (${gameState.players[1].deck.length} carte)`); const initialHandSize = 3; for (let i = 0; i < initialHandSize; i++) { if(gameState.players[0].deck.length > 0) gameState.players[0].hand.push(gameState.players[0].deck.shift()); if(gameState.players[1].deck.length > 0) gameState.players[1].hand.push(gameState.players[1].deck.shift()); } console.log("Mani iniziali pescate."); addEventListeners(); startTurn(1); }
+function initGame() {
+    console.log("Inizializzazione gioco...");
+    // Verifica che le funzioni da cards.js siano caricate
+    if (typeof getCardData !== 'function' || typeof getAllCardIds !== 'function') {
+         console.error("Errore critico: Funzioni getCardData o getAllCardIds non trovate. Assicurati che cards.js sia caricato correttamente PRIMA di game.js.");
+         alert("Errore critico: Impossibile caricare le funzioni delle carte.");
+         return;
+    }
+    const allCardIds = getAllCardIds();
+    if (!allCardIds || allCardIds.length === 0) { console.error("Impossibile inizializzare: nessun ID carta trovato da cards.js!"); alert("Errore critico: Impossibile caricare le carte."); return; }
+    const deckP1 = []; const deckP2 = []; const copiesPerCard = 2;
+    for (let i = 0; i < copiesPerCard; i++) { deckP1.push(...allCardIds); deckP2.push(...allCardIds); }
+    gameState = { currentPlayerId: 1, turnNumber: 1, players: [ { id: 1, hp: 20, maxResources: 0, currentResources: 0, deck: [...deckP1], hand: [], field: [], graveyard: [] }, { id: 2, hp: 20, maxResources: 0, currentResources: 0, deck: [...deckP2], hand: [], field: [], graveyard: [] } ], gameEnded: false, winner: null, selectingTarget: null, potentialTargets: [], pendingActionInfo: null };
+    addLogMessage("Benvenuto nel Test LCG!");
+    shuffleArray(gameState.players[0].deck); shuffleArray(gameState.players[1].deck);
+    console.log(`Mazzi mescolati: G1 (${gameState.players[0].deck.length} carte), G2 (${gameState.players[1].deck.length} carte)`);
+    const initialHandSize = 3;
+    for (let i = 0; i < initialHandSize; i++) { if(gameState.players[0].deck.length > 0) gameState.players[0].hand.push(gameState.players[0].deck.shift()); if(gameState.players[1].deck.length > 0) gameState.players[1].hand.push(gameState.players[1].deck.shift()); }
+    console.log("Mani iniziali pescate.");
+    addEventListeners();
+    startTurn(1);
+}
 function endGame(winnerId) { if (gameState.gameEnded) return; gameState.gameEnded = true; gameState.winner = winnerId; gameState.selectingTarget = null; gameState.potentialTargets = []; gameState.pendingActionInfo = null; clearHighlights(); addLogMessage(`Partita terminata! Giocatore ${winnerId} ha vinto!`); console.log(`Partita terminata! Vincitore: Giocatore ${winnerId}`); renderGame(); document.querySelectorAll('.card').forEach(card => { const clone = card.cloneNode(true); card.parentNode.replaceChild(clone, card); }); setTimeout(() => alert(`Partita terminata! Giocatore ${winnerId} ha vinto!`), 100); }
-
 
 // ==================== Avvio ====================
 document.addEventListener('DOMContentLoaded', initGame);
