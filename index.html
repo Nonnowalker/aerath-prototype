@@ -19,30 +19,27 @@
                 <span>Vita: <span id="hp-player-2">20</span></span>
                 <span>Risorse: <span id="res-player-2">0</span>/<span id="max-res-player-2">0</span></span>
                 <span>Mazzo: <span id="deck-count-2">--</span></span>
-                <span>Cimitero: <span id="graveyard-count-2">0</span></span>
+                <span>Cimitero: <span id="graveyard-count-2">0</span></span> <!-- Conteggio rimane, cliccabilità viene da JS -->
             </div>
             <!-- Mano Giocatore 2 -->
             <div class="hand" id="hand-player-2">
-                <!-- Le carte in mano (dell'avversario, potrebbero essere nascoste o mostrate come placeholder) verranno aggiunte qui da JS -->
-                <div class="card-placeholder"></div> <!-- Esempio placeholder -->
-                <div class="card-placeholder"></div> <!-- Esempio placeholder -->
+                <!-- Placeholder verranno aggiunti qui da JS -->
             </div>
             <!-- Campo Giocatore 2 -->
             <div class="field" id="field-player-2">
-                <!-- Le carte sul campo (giocate dall'avversario) verranno aggiunte qui da JS -->
+                <!-- Le carte sul campo verranno aggiunte qui da JS -->
             </div>
         </div>
 
         <!-- ==================== Area Centrale (Log e Controlli) ==================== -->
         <div class="center-area">
-            <div class="game-log" id="game-log">
-                <p>Log di Gioco:</p>
-                <!-- I messaggi verranno aggiunti qui da JS -->
-            </div>
+             <!-- == Rimosso vecchio game-log div == -->
             <div class="game-controls">
-                <button id="end-turn-button">Passa Turno</button>
+                <!-- NUOVO Bottone per aprire modale log -->
+                <button id="show-log-button" title="Mostra Log di Gioco">Mostra Log</button>
+
                 <p>Turno Giocatore: <span id="turn-indicator">1</span></p>
-                <!-- Potresti aggiungere qui altri controlli o indicatori di fase -->
+                <button id="end-turn-button">Passa Turno</button>
             </div>
         </div>
 
@@ -50,11 +47,11 @@
         <div class="player-area current-player-area" id="player-area-1">
              <!-- Campo Giocatore 1 -->
              <div class="field" id="field-player-1">
-                <!-- Le carte sul campo (giocate da te) verranno aggiunte qui da JS -->
+                <!-- Le carte sul campo verranno aggiunte qui da JS -->
             </div>
              <!-- Mano Giocatore 1 -->
             <div class="hand" id="hand-player-1">
-                <!-- Le carte in mano (tue) verranno aggiunte qui da JS -->
+                <!-- Le carte in mano verranno aggiunte qui da JS -->
             </div>
             <!-- Informazioni e Zone Giocatore 1 -->
             <div class="player-info-bottom">
@@ -64,25 +61,50 @@
                     <span>Risorse: <span id="res-player-1">0</span>/<span id="max-res-player-1">0</span></span>
                 </div>
                 <div class="deck-graveyard">
-                    <div class="deck" id="deck-player-1" title="Clicca per pescare (se possibile)">
+                    <div class="deck" id="deck-player-1" title="Mazzo"> <!-- Tolto riferimento a 'clicca per pescare' -->
                         Mazzo (<span id="deck-count-1">--</span>)
                     </div>
-                    <div class="graveyard" id="graveyard-player-1" title="Visualizza Cimitero">
+                    <!-- Aggiunto data-player-id per JS -->
+                    <div class="graveyard" id="graveyard-player-1" data-player-id="1" title="Visualizza Cimitero Giocatore 1">
                         Cimitero (<span id="graveyard-count-1">0</span>)
                     </div>
+                     <!-- Aggiunto div Cimitero Giocatore 2 (non cliccabile di base, ma con ID per info) -->
+                     <div class="graveyard opponent-graveyard" id="graveyard-info-player-2" data-player-id="2" title="Visualizza Cimitero Giocatore 2"> <!-- ID cambiato in info, aggiunto data-player-id -->
+                         Cimitero (<span id="graveyard-count-2-display">0</span>) <!-- ID span cambiato -->
+                     </div>
                 </div>
             </div>
         </div>
 
     </div>
 
-    <!-- Modale/Popup per visualizzare dettagli (es. Cimitero) -->
-    <div id="modal" class="modal">
+    <!-- ==================== Modali ==================== -->
+
+    <!-- Modale per visualizzare Cimitero -->
+    <!-- ID Modale Cambiato -->
+    <div id="graveyard-modal" class="modal">
         <div class="modal-content">
-            <span class="close-button" onclick="closeModal()">×</span>
-            <h3 id="modal-title">Dettagli</h3>
-            <div id="modal-body">
-                <!-- Contenuto del modale verrà inserito qui da JS -->
+            <!-- ID Bottone Cambiato per specificità (ma useremo ancora la classe) -->
+            <span class="close-button" data-modal-id="graveyard-modal">×</span>
+            <!-- ID Titolo Cambiato -->
+            <h3 id="modal-title-graveyard">Cimitero</h3>
+             <!-- ID Corpo Cambiato -->
+            <div id="modal-body-graveyard">
+                <!-- Contenuto del modale cimitero verrà inserito qui da JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- NUOVO Modale per visualizzare Log -->
+    <div id="log-modal" class="modal">
+        <div class="modal-content">
+            <!-- ID Bottone Cambiato per specificità -->
+            <span class="close-button" data-modal-id="log-modal">×</span>
+             <!-- ID Titolo Cambiato -->
+            <h3 id="modal-title-log">Log di Gioco</h3>
+            <!-- ID Corpo Cambiato -->
+            <div id="modal-body-log">
+                <!-- I messaggi di log verranno inseriti qui da JS -->
             </div>
         </div>
     </div>
