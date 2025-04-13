@@ -1,202 +1,148 @@
 /* Reset base e stile generale */
-body {
+html, body {
     margin: 0;
     padding: 0;
+    height: 100%;
+    width: 100%;
     font-family: sans-serif;
     background-color: #1a1a1a;
     color: #e0e0e0;
-    display: flex;
-    /* Cambiato: Centra il contenitore principale orizzontalmente */
-    justify-content: center;
-    align-items: center; /* Centra verticalmente se il contenuto è minore dell'altezza */
-    min-height: 100vh;
-    overflow-x: auto; /* Permette scroll orizzontale se necessario */
+    overflow: hidden;
 }
 
-/* Contenitore Principale Orizzontale */
-.game-container {
-    width: 98%; /* Quasi tutta la larghezza */
-    /* Altezza fissa o max-height potrebbe essere necessaria */
-    height: 95vh; /* Esempio: occupa gran parte dell'altezza viewport */
-    margin-top: 10px;
-    margin-bottom: 10px;
-    display: flex;
-    /* Cambiato: Layout Orizzontale */
-    flex-direction: row;
-    border: 1px solid #444;
+/* Struttura Layout Principale (CSS Grid) */
+.game-layout-container {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    grid-template-columns: auto 1fr auto;
+    height: 100vh;
+    width: 100vw;
     background-color: #222;
+    gap: 5px;
+    padding: 5px;
+    box-sizing: border-box;
 }
 
-/* Area Centrale (Controlli/Turno) - Posizionata sopra */
-/* Modifica: La rimuoviamo da qui, la inseriremo DENTRO le player-area o tra di esse in HTML */
-/* .center-area { ... } */
-
-
-/* Aree Giocatore (Sinistra/Destra) */
-.player-area {
-    /* Cambiato: Larghezza divisa (meno un po' per gap) */
-    flex-basis: 48%; /* Occupa quasi metà spazio */
-    flex-grow: 1;
-    height: 100%; /* Occupa tutta l'altezza del contenitore */
-    padding: 10px;
-    /* Cambiato: Layout interno Verticale */
-    display: flex;
-    flex-direction: column;
-    border: none; /* Rimosso bordo inferiore */
-    border-right: 1px solid #444; /* Bordo tra i giocatori */
-    overflow-y: hidden; /* Nasconde overflow verticale interno per ora */
-}
-.player-area:last-child {
-    border-right: none; /* Nessun bordo a destra dell'ultimo */
-}
-/* Evidenzia giocatore attivo (stile mantenuto) */
-.player-area.active-turn {
-    outline: 3px solid gold;
-    box-shadow: 0 0 15px gold;
-}
-
-/* Struttura interna Player Area */
-.player-main-content {
-    flex-grow: 1; /* Occupa lo spazio rimanente */
-    display: flex;
-    flex-direction: row; /* Campo a fianco di Mano/Deck */
-    gap: 10px;
-    overflow: hidden; /* Evita overflow */
-    height: calc(100% - 100px); /* Altezza meno spazio per info/controlli */
-}
-
-.player-controls-info {
-     /* Altezza fissa per info e controlli in basso/alto */
-    height: 90px;
-    padding: 5px 0;
-    border-top: 1px dashed #444; /* Separatore */
-    margin-top: 10px;
-    display: flex;
-    flex-direction: column; /* Info sopra, controlli sotto */
-    justify-content: space-around;
-}
-
-
-/* Informazioni Giocatore (semplificate) */
-.player-info {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px; /* Ridotto gap */
-    font-size: 0.9em; /* Ridotto font size */
-    color: #aaa;
-    padding-bottom: 5px;
-    border-bottom: none; /* Rimosso bordo */
-    margin-bottom: 5px;
-}
-.player-info span {
-    background-color: #333;
-    padding: 2px 5px;
-    border-radius: 3px;
-}
-
-/* Controlli Giocatore (Turno/Log) - Messo qui */
-.player-game-controls {
+/* Barre Superiore e Inferiore */
+.top-bar, .bottom-bar {
+    grid-column: 1 / 4;
+    background-color: #2a2a2a;
+    padding: 5px 10px;
+    border-radius: 4px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    min-height: 40px;
+    border: 1px solid #444;
+}
+.top-bar { grid-row: 1; }
+.bottom-bar { grid-row: 3; }
+
+/* Controlli dentro le barre */
+.bar-controls-left, .bar-controls-center, .bar-controls-right {
+    display: flex;
+    align-items: center;
     gap: 15px;
+    font-size: 0.9em; /* Dimensione base per info nelle barre */
 }
-/* Stili bottoni (show-log, end-turn) rimangono validi */
-#show-log-button { padding: 5px 10px; font-size: 0.8em; }
-#end-turn-button { padding: 8px 15px; font-size: 1em; }
-.turn-indicator-area { font-size: 0.9em; }
+.bar-controls-center {
+    flex-grow: 1;
+    justify-content: center;
+}
+.bar-controls-right {
+    justify-content: flex-end;
+}
+/* Stili specifici per info/bottoni nelle barre */
+.bar-info span { /* Es. per HP/Res nelle barre */
+    background-color: #333;
+    padding: 2px 5px;
+    border-radius: 3px;
+    color: #bbb;
+}
+#show-log-button { padding: 5px 10px; font-size: 0.8em; cursor: pointer; background-color: #444; color: #ddd; border: 1px solid #666; border-radius: 4px; transition: background-color 0.2s ease; }
+#show-log-button:hover { background-color: #555; }
+#end-turn-button { padding: 8px 15px; font-size: 1em; cursor: pointer; background-color: #555; color: #fff; border: 1px solid #777; border-radius: 4px; transition: background-color 0.2s ease; }
+#end-turn-button:hover { background-color: #666; }
+#end-turn-button:disabled { background-color: #333; color: #777; cursor: not-allowed; }
 
 
-/* Zona Mano / Deck / Cimitero (Verticale) */
-.hand-deck-graveyard-zone {
+/* Area Laterale Sinistra e Destra */
+.left-sidebar, .right-sidebar {
+    grid-row: 2;
+    background-color: #252525;
+    border-radius: 4px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 150px; /* Larghezza fissa */
+    border: 1px solid #444;
+    overflow-y: auto;
+}
+.left-sidebar { grid-column: 1; }
+.right-sidebar { grid-column: 3; }
+
+/* Area di Gioco Centrale */
+.center-game-area {
+    grid-row: 2;
+    grid-column: 2;
+    background-color: #1f1f1f;
+    border-radius: 4px;
+    padding: 10px;
     display: flex;
     flex-direction: column;
     gap: 10px;
-    flex-basis: 230px; /* Larghezza fissa per contenere carte grandi */
-    flex-shrink: 0; /* Non restringere */
-    overflow-y: auto; /* Scroll se mano troppo grande */
-    padding-right: 5px; /* Spazio per scrollbar */
+    border: 1px solid #444;
+    overflow: hidden;
 }
 
-/* Mano */
-.hand {
+/* Aree Mano */
+.hand-area {
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    padding: 5px;
+    height: 180px;
+    flex-shrink: 0;
     display: flex;
-    /* Cambiato: Carte in colonna */
-    flex-direction: column;
-    flex-wrap: nowrap; /* No a capo */
+    align-items: center;
     gap: 8px;
-    min-height: auto; /* Altezza si adatta */
-    padding: 5px;
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
-    margin-bottom: 0; /* Rimosso margine */
-    align-items: center; /* Centra le carte orizzontalmente */
-    flex-grow: 1; /* Occupa spazio verticale */
-    overflow-y: auto; /* Scroll interno se serve */
+    overflow-x: auto;
+    overflow-y: hidden;
 }
-.opponent-area .hand {
-    /* Stile per mano avversario (placeholder) */
-    background-color: rgba(50, 50, 50, 0.3);
-}
+#hand-area-player1 { order: 3; }
+#hand-area-player2 { order: 1; }
 
-
-/* Deck e Cimitero (Affiancati in basso) */
-.deck-graveyard {
-    display: flex;
-    flex-direction: row; /* Affiancati */
-    justify-content: space-around; /* Spaziati */
-    gap: 10px;
-    margin-top: auto; /* Spinge in fondo alla colonna */
-    flex-shrink: 0; /* Non restringere */
-}
-
-.deck, .graveyard {
-    /* Ridimensionati leggermente */
-    width: 100px;
-    height: 140px;
-    border: 2px solid #666;
-    font-size: 0.8em; /* Ridotto */
-    border-radius: 7px; /* Ridotto */
-    /* Stili rimanenti invariati */
-    background-color: #3a3a3a; color: #ccc; display: flex; justify-content: center; align-items: center; text-align: center; cursor: pointer; transition: background-color 0.2s ease, border-color 0.2s ease, opacity 0.3s ease;
-}
-.deck:hover, .graveyard:hover { background-color: #4a4a4a; border-color: #999; }
-.deck.deck-inactive, .graveyard.graveyard-inactive { cursor: default; opacity: 0.6; }
-.deck.deck-inactive:hover, .graveyard.graveyard-inactive:hover { background-color: #3a3a3a; border-color: #666; }
-
-
-/* Campo di Battaglia (GRID) */
+/* Griglia 6x6 centrale */
 .field {
-    flex-grow: 1; /* Occupa spazio rimanente orizzontale */
-    min-height: auto; /* Altezza definita da righe grid */
-    padding: 5px;
-    background-color: rgba(10, 10, 10, 0.3); /* Sfondo campo diverso */
+    flex-grow: 1;
+    background-color: rgba(10, 10, 10, 0.3);
     border-radius: 4px;
-    margin-bottom: 0;
-
-    /* === GRID DEFINITION === */
+    border: 1px solid #777;
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 colonne uguali */
-    grid-template-rows: repeat(6, 1fr); /* 6 righe uguali */
-    gap: 5px; /* Spazio tra le celle */
-    border: 1px solid #777; /* Bordo per il campo */
-    overflow: auto; /* Scroll se griglia esce */
-    align-content: start; /* Allinea righe all'inizio */
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: repeat(6, 1fr);
+    gap: 4px;
+    padding: 4px;
+    order: 2;
+    overflow: hidden;
 }
 
-/* Stile Celle della Griglia */
+/* Celle Griglia */
 .grid-cell {
-    border: 1px dashed #555; /* Bordi celle visibili per debug */
-    border-radius: 8px;
-    min-height: 150px; /* Altezza minima cella (adattabile) */
-    /* Centra la carta dentro la cella */
+    border: 1px dashed #555;
+    border-radius: 4px;
+    min-height: 80px;
     display: flex;
     justify-content: center;
     align-items: center;
-    position: relative; /* Per posizionare indicatori/effetti */
-    background-color: rgba(255, 255, 255, 0.02); /* Sfondo cella leggero */
+    position: relative;
+    background-color: rgba(255, 255, 255, 0.02);
 }
-/* Stile cella quando è una possibile destinazione (es. piazzamento) */
+.grid-cell[data-row="0"].initial-placement-g2,
+.grid-cell[data-row="5"].initial-placement-g1 {
+    border-style: solid;
+    border-color: #668;
+}
 .grid-cell.placement-valid {
     background-color: rgba(0, 255, 0, 0.1);
     border-style: solid;
@@ -207,71 +153,130 @@ body {
     background-color: rgba(0, 255, 0, 0.2);
 }
 
-
-/* Stile Carte (Originale per Mano/Modali) */
-.card {
-    width: 210px; height: 300px; border: 2px solid #888; background-color: #555; color: #fff; border-radius: 10px; display: flex; flex-direction: column; justify-content: space-between; font-size: 1em; padding: 8px; box-sizing: border-box; position: relative; cursor: pointer; overflow: hidden; transition: transform 0.1s ease-in-out, box-shadow 0.2s ease;
+/* Info Giocatori (Sidebar) */
+.player-info-sidebar {
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #555;
 }
-.card:hover { border-color: #eee; box-shadow: 0 0 12px rgba(255, 255, 255, 0.6); transform: scale(1.03); }
-.card .card-name { font-weight: bold; font-size: 1.1em; white-space: normal; margin-bottom: 5px; }
-.card .card-cost { position: absolute; top: 8px; right: 8px; background-color: rgba(0, 0, 0, 0.7); border-radius: 50%; width: 30px; height: 30px; display: flex; justify-content: center; align-items: center; font-size: 1.1em; font-weight: bold; border: 1px solid #ccc; }
-.card .card-stats { display: flex; justify-content: space-around; font-size: 1.2em; font-weight: bold; background-color: rgba(0, 0, 0, 0.7); padding: 4px 8px; border-radius: 5px; margin-top: 5px; }
-.card .card-art { position: absolute; top: 45px; left: 8px; right: 8px; bottom: 45px; background-color: #777; background-size: cover; background-position: center; border-radius: 5px; }
-.card .card-art.card-art-fallback { background-image: none !important; background-color: #666; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.9em; color: #ccc; padding: 5px; }
-.card .card-ability { display: none; }
-
-/* NUOVO: Stile Carte sulla Griglia (più piccole) */
-.card.on-grid {
-    width: 90%; /* Occupa gran parte della cella */
-    height: 90%; /* Occupa gran parte della cella */
-    max-width: 120px; /* Limite dimensione */
-    max-height: 170px; /* Limite dimensione */
-    font-size: 0.7em; /* Font più piccolo */
-    padding: 4px;
-    border-radius: 6px; /* Raggio ridotto */
-    border-width: 1px;
-    position: static; /* Rimuove position absolute dal costo */
-    cursor: default; /* Cursore normale sulla griglia (a meno che non sia bersaglio) */
-}
-.card.on-grid:hover {
-     transform: none; /* No scale hover sulla griglia */
-     box-shadow: 0 0 8px rgba(255, 255, 255, 0.4); /* Ombra ridotta */
-}
-.card.on-grid .card-cost {
-    /* Posizionamento relativo per costo sulla griglia */
-    position: relative;
-    top: auto;
-    right: auto;
-    width: 20px; height: 20px;
+.player-info-sidebar h4 {
+    margin: 0 0 5px 0;
     font-size: 0.9em;
-    align-self: flex-end; /* Allinea a destra */
-    margin-top: -22px; /* Sovrapponi leggermente al nome */
-    margin-right: -2px;
-    border: none;
+    color: #ccc;
+    border-bottom: 1px solid #444;
+    padding-bottom: 3px;
 }
-.card.on-grid .card-name { font-size: 1em; margin-bottom: 2px;}
-.card.on-grid .card-art {
-    position: static; /* Rimuovi posizionamento assoluto */
-    height: 60%; /* Altezza relativa per l'arte */
-    margin-top: 2px; margin-bottom: 2px;
+.player-info-sidebar div {
+    font-size: 0.85em;
+    margin-bottom: 3px;
+    color: #bbb;
 }
-.card.on-grid .card-stats { font-size: 1em; padding: 2px 4px; }
+.player-info-sidebar div span { /* Per i valori HP/Res */
+    font-weight: bold;
+    color: #fff;
+}
+
+/* Deck/Cimitero (Sidebar) */
+.deck-graveyard-sidebar {
+     display: flex;
+     flex-direction: column;
+     gap: 10px;
+     margin-top: auto;
+}
+.deck, .graveyard {
+    width: 100%;
+    height: 100px;
+    border: 2px solid #666;
+    font-size: 0.8em;
+    border-radius: 5px;
+    background-color: #3a3a3a; color: #ccc; display: flex; justify-content: center; align-items: center; text-align: center; cursor: pointer; transition: background-color 0.2s ease, border-color 0.2s ease, opacity 0.3s ease;
+}
+.deck:hover, .graveyard:hover { background-color: #4a4a4a; border-color: #999; }
+.deck.deck-inactive, .graveyard.graveyard-inactive { cursor: default; opacity: 0.6; }
+.deck.deck-inactive:hover, .graveyard.graveyard-inactive:hover { background-color: #3a3a3a; border-color: #666; }
 
 
-/* Placeholder mano avversario (dimensioni originali) */
-.card-placeholder { width: 210px; height: 300px; background-color: #404040; border-style: dashed; cursor: default; }
-.card-placeholder:hover { border-color: #888; box-shadow: none; transform: none; }
+/* --- Stili Carte --- */
 
-/* Modali (Stili base rimangono validi) */
+/* Classe base comune a tutte le carte */
+.card {
+    background-color: #555;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.1s ease-in-out, box-shadow 0.2s ease;
+}
+.card .card-name { font-weight: bold; }
+.card .card-cost { position: absolute; background-color: rgba(0, 0, 0, 0.7); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; }
+.card .card-stats { display: flex; justify-content: space-around; font-weight: bold; background-color: rgba(0, 0, 0, 0.7); border-radius: 5px; }
+.card .card-art { background-size: cover; background-position: center; border-radius: 3px; /* Era 5px */ }
+.card .card-art.card-art-fallback { background-image: none !important; background-color: #666; display: flex; align-items: center; justify-content: center; text-align: center; color: #ccc; padding: 5px; }
+
+
+/* 1. Carte Grandi (es. Zoom o Modale Dettaglio - non usato attivamente ora) */
+.card.large-size {
+    width: 210px; height: 300px; border: 2px solid #888; font-size: 1em; padding: 8px; border-radius: 10px; cursor: pointer;
+}
+.card.large-size:hover { border-color: #eee; box-shadow: 0 0 12px rgba(255, 255, 255, 0.6); transform: scale(1.03); }
+.card.large-size .card-name { font-size: 1.1em; white-space: normal; margin-bottom: 5px; }
+.card.large-size .card-cost { top: 8px; right: 8px; width: 30px; height: 30px; font-size: 1.1em; border: 1px solid #ccc; }
+.card.large-size .card-stats { font-size: 1.2em; padding: 4px 8px; margin-top: 5px; }
+.card.large-size .card-art { position: absolute; top: 45px; left: 8px; right: 8px; bottom: 45px; }
+.card.large-size .card-art.card-art-fallback { font-size: 0.9em; }
+
+
+/* 2. Carte nella Mano */
+.card.in-hand {
+    width: 112px; height: 160px; border: 1px solid #999; font-size: 0.75em; padding: 5px; border-radius: 7px; cursor: pointer; flex-shrink: 0; /* Non farle restringere */
+}
+.card.in-hand:hover { border-color: #fff; box-shadow: 0 0 10px rgba(255, 255, 255, 0.5); transform: scale(1.05) translateY(-5px); z-index: 10; }
+.card.in-hand .card-name { font-size: 1em; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } /* Tronca nomi lunghi */
+.card.in-hand .card-cost { width: 22px; height: 22px; font-size: 0.9em; top: 4px; right: 4px; }
+.card.in-hand .card-art { position: absolute; top: 25px; bottom: 25px; left: 5px; right: 5px; }
+.card.in-hand .card-art.card-art-fallback { font-size: 0.8em; }
+.card.in-hand .card-stats { font-size: 0.9em; padding: 2px 3px; }
+
+
+/* 3. Carte sulla Griglia */
+.card.on-grid {
+    width: 95%; height: 95%; max-width: 90px; max-height: 130px; border: 1px solid #777; font-size: 0.6em; padding: 3px; border-radius: 4px; cursor: default; /* No cursore mano */
+}
+.card.on-grid:hover { border-color: #ccc; box-shadow: 0 0 6px rgba(255, 255, 255, 0.4); transform: scale(1.02); }
+.card.on-grid .card-name { font-size: 0.9em; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.card.on-grid .card-cost { position: absolute; width: 16px; height: 16px; font-size: 0.8em; top: 2px; right: 2px; } /* Tornato assoluto per visibilità */
+.card.on-grid .card-art { position: absolute; top: 18px; bottom: 18px; left: 3px; right: 3px; }
+.card.on-grid .card-art.card-art-fallback { font-size: 0.8em; }
+.card.on-grid .card-stats { font-size: 0.9em; padding: 1px 2px; }
+
+
+/* Placeholder mano avversario */
+.card-placeholder {
+     width: 112px; height: 160px; background-color: #404040; border: 1px dashed #888; border-radius: 7px; cursor: default; flex-shrink: 0;
+}
+
+/* Modali */
 .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0, 0, 0, 0.7); justify-content: center; align-items: center; }
 .modal.active { display: flex; }
 .modal-content { background-color: #2d2d2d; margin: auto; padding: 20px; border: 1px solid #888; border-radius: 5px; position: relative; color: #e0e0e0; width: 80%; max-height: 85vh; display: flex; flex-direction: column; }
 .modal-content .close-button { color: #aaa; position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; }
 .modal-content .close-button:hover, .modal-content .close-button:focus { color: #fff; text-decoration: none; }
-/* Modale Cimitero (carte più piccole qui) */
-#modal-body-graveyard { margin-top: 15px; max-height: calc(85vh - 70px); overflow-y: auto; display: flex; flex-wrap: wrap; gap: 10px; /* Ridotto gap */ justify-content: center; }
-#modal-body-graveyard .card { width: 105px !important; height: 150px !important; /* Dimensioni fisse per cimitero */ font-size: 0.7em !important; cursor: default !important; border-color: #666; transform: none !important; }
-#modal-body-graveyard .card:hover { box-shadow: none; }
+
+/* Modale Cimitero (Usa carte dimensione 'in-hand') */
+#modal-body-graveyard { margin-top: 15px; max-height: calc(85vh - 70px); overflow-y: auto; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+#modal-body-graveyard .card { /* Applica stile 'in-hand' ma senza interattività */
+    width: 112px !important; height: 160px !important; border: 1px solid #666 !important; font-size: 0.75em !important; padding: 5px !important; border-radius: 7px !important; cursor: default !important; flex-shrink: 0 !important; transform: none !important;
+}
+#modal-body-graveyard .card:hover { box-shadow: none !important; transform: none !important; }
+/* Nascondi costo/stats nel cimitero? Opzionale */
+/* #modal-body-graveyard .card .card-cost,
+#modal-body-graveyard .card .card-stats { display: none; } */
+
+
 /* Modale Log */
 #log-modal .modal-content { max-width: 800px; }
 #modal-body-log { margin-top: 15px; max-height: calc(85vh - 70px); overflow-y: scroll; background-color: #111; border: 1px solid #333; border-radius: 4px; padding: 10px; font-size: 0.9em; color: #bbb; line-height: 1.4; }
@@ -280,14 +285,5 @@ body {
 #modal-body-log p .log-timestamp { color: #888; margin-right: 5px; }
 
 /* Highlight Target */
-.potential-target { /* Si applica a carte o celle */
-    outline: 3px solid yellow; /* Ridotto leggermente */
-    box-shadow: 0 0 12px yellow; /* Ridotto leggermente */
-    cursor: crosshair !important;
-    /* border-radius: 12px; -- Rimosso, usa il radius dell'elemento base */
-}
-.potential-target:hover {
-    /* Rimosso scale hover per target, potrebbe essere fastidioso sulla griglia */
-    /* transform: scale(1.05) !important; */
-    background-color: rgba(255, 255, 0, 0.1); /* Aggiunge sfondo giallo leggero su hover target */
-}
+.potential-target { outline: 3px solid yellow; box-shadow: 0 0 12px yellow; cursor: crosshair !important; }
+.potential-target:hover { background-color: rgba(255, 255, 0, 0.1); }

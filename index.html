@@ -3,153 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aerath LCG - Grid Test</title> <!-- Titolo aggiornato -->
+    <title>Aerath LCG - Grid Test v2</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- Contenitore Principale Orizzontale -->
-    <div class="game-container">
+    <!-- Contenitore Layout Principale (Grid) -->
+    <div class="game-layout-container">
 
-        <!-- ==================== Area Giocatore 1 (Sinistra) ==================== -->
-        <div class="player-area current-player-area" id="player-area-1">
+        <!-- ==================== Barra Superiore ==================== -->
+        <div class="top-bar">
+            <div class="bar-controls-left bar-info" id="info-player-2-top">
+                <!-- Info G2 verranno popolate qui da JS -->
+                <span>G2:</span>
+                <span>HP: <span id="hp-player-2">20</span></span>
+                <span>RES: <span id="res-player-2">0</span>/<span id="max-res-player-2">0</span></span>
+            </div>
+            <div class="bar-controls-center turn-indicator-area">
+                Turno Giocatore: <span id="turn-indicator">1</span>
+            </div>
+            <div class="bar-controls-right">
+                <button id="show-log-button" title="Mostra Log di Gioco">Log</button>
+                <!-- Altri controlli globali qui? -->
+            </div>
+        </div>
 
-            <!-- Info Giocatore 1 (in alto) -->
-            <div class="player-info" id="info-player-1">
-                <span>Giocatore 1</span>
-                <span>Vita: <span id="hp-player-1">20</span></span>
-                <span>Risorse: <span id="res-player-1">0</span>/<span id="max-res-player-1">0</span></span>
-                 <!-- Spostato conteggio mazzo/cimitero qui per visibilità -->
-                 <span>Mazzo: <span id="deck-count-1">--</span></span>
-                 <span>Cimitero: <span id="graveyard-count-1">0</span></span>
+        <!-- ==================== Sidebar Sinistra (G2?) ==================== -->
+        <div class="left-sidebar">
+             <h4>Giocatore 2</h4>
+             <div class="player-info-sidebar" id="details-player-2">
+                 <div>Mazzo: <span id="deck-count-2">--</span></div>
+                 <!-- Altre info G2 qui? -->
+             </div>
+             <div class="deck-graveyard-sidebar">
+                 <div class="deck deck-inactive" id="deck-player-2" title="Mazzo Giocatore 2">
+                     Mazzo (<span id="deck-count-2-display">--</span>)
+                 </div>
+                 <div class="graveyard" id="graveyard-player-2" data-player-id="2" title="Visualizza Cimitero Giocatore 2">
+                     Cimitero (<span id="graveyard-count-2-display">0</span>)
+                 </div>
+            </div>
+        </div>
+
+        <!-- ==================== Area Centrale ==================== -->
+        <div class="center-game-area">
+            <!-- Mano Giocatore 2 (Alto) -->
+            <div class="hand-area" id="hand-area-player2">
+                <!-- Placeholders o carte G2 verranno aggiunte da JS -->
+                <!-- Esempio placeholder -->
+                <div class="card-placeholder"></div>
+                <div class="card-placeholder"></div>
+                <div class="card-placeholder"></div>
             </div>
 
-            <!-- Contenuto Principale Giocatore 1 (Campo + Mano/Zone) -->
-            <div class="player-main-content">
+            <!-- Campo di Battaglia (Griglia 6x6) -->
+            <div class="field" id="field-shared">
+                <!-- Celle 6x6 verranno generate dinamicamente da JS -->
+                <!-- Non mettere celle manualmente qui -->
+            </div>
 
-                <!-- Campo di Battaglia Giocatore 1 (GRID) -->
-                <div class="field" id="field-player-1">
-                    <!-- 18 Celle (6 righe x 3 colonne) generate da JS o manualmente -->
-                    <!-- Esempio manuale (verrà poi fatto da JS): -->
-                    <div class="grid-cell" data-row="0" data-col="0"></div>
-                    <div class="grid-cell" data-row="0" data-col="1"></div>
-                    <div class="grid-cell" data-row="0" data-col="2"></div>
-                    <div class="grid-cell" data-row="1" data-col="0"></div>
-                    <div class="grid-cell" data-row="1" data-col="1"></div>
-                    <div class="grid-cell" data-row="1" data-col="2"></div>
-                    <div class="grid-cell" data-row="2" data-col="0"></div>
-                    <div class="grid-cell" data-row="2" data-col="1"></div>
-                    <div class="grid-cell" data-row="2" data-col="2"></div>
-                    <div class="grid-cell" data-row="3" data-col="0"></div>
-                    <div class="grid-cell" data-row="3" data-col="1"></div>
-                    <div class="grid-cell" data-row="3" data-col="2"></div>
-                    <div class="grid-cell" data-row="4" data-col="0"></div>
-                    <div class="grid-cell" data-row="4" data-col="1"></div>
-                    <div class="grid-cell" data-row="4" data-col="2"></div>
-                    <div class="grid-cell" data-row="5" data-col="0"></div>
-                    <div class="grid-cell" data-row="5" data-col="1"></div>
-                    <div class="grid-cell" data-row="5" data-col="2"></div>
-                    <!-- Fine Celle Griglia G1 -->
+            <!-- Mano Giocatore 1 (Basso) -->
+            <div class="hand-area" id="hand-area-player1">
+                 <!-- Carte mano G1 verranno aggiunte da JS -->
+            </div>
+        </div>
+
+        <!-- ==================== Sidebar Destra (G1?) ==================== -->
+        <div class="right-sidebar">
+             <h4>Giocatore 1</h4>
+             <div class="player-info-sidebar" id="details-player-1">
+                 <div>Mazzo: <span id="deck-count-1">--</span></div>
+                 <!-- Altre info G1 qui? -->
+             </div>
+             <div class="deck-graveyard-sidebar">
+                <div class="deck" id="deck-player-1" title="Mazzo Giocatore 1">
+                    Mazzo (<span id="deck-count-1-display">--</span>)
                 </div>
-
-                <!-- Zona Mano / Deck / Cimitero Giocatore 1 (Verticale) -->
-                <div class="hand-deck-graveyard-zone">
-                    <div class="hand" id="hand-player-1">
-                        <!-- Carte in mano G1 verranno aggiunte qui da JS -->
-                    </div>
-                    <div class="deck-graveyard">
-                        <div class="deck" id="deck-player-1" title="Mazzo Giocatore 1">
-                            Mazzo (<span id="deck-count-1-display">--</span>) <!-- Nuovo ID per span conteggio qui -->
-                        </div>
-                        <div class="graveyard" id="graveyard-player-1" data-player-id="1" title="Visualizza Cimitero Giocatore 1">
-                            Cimitero (<span id="graveyard-count-1-display">0</span>) <!-- Nuovo ID per span conteggio qui -->
-                        </div>
-                    </div>
-                </div>
-
-            </div> <!-- Fine player-main-content G1 -->
-
-             <!-- Controlli Gioco (in basso G1) -->
-             <div class="player-controls-info">
-                <div class="player-game-controls">
-                     <button id="show-log-button" title="Mostra Log di Gioco">Mostra Log</button>
-                     <div class="turn-indicator-area">Turno: <span id="turn-indicator">1</span></div>
-                     <button id="end-turn-button">Passa Turno</button>
+                <div class="graveyard" id="graveyard-player-1" data-player-id="1" title="Visualizza Cimitero Giocatore 1">
+                    Cimitero (<span id="graveyard-count-1-display">0</span>)
                 </div>
              </div>
+        </div>
 
-        </div> <!-- Fine Area Giocatore 1 -->
-
-
-        <!-- ==================== Area Giocatore 2 (Destra) ==================== -->
-        <div class="player-area opponent-area" id="player-area-2">
-
-            <!-- Info Giocatore 2 (in alto) -->
-            <div class="player-info" id="info-player-2">
-                <span>Giocatore 2</span>
-                <span>Vita: <span id="hp-player-2">20</span></span>
-                <span>Risorse: <span id="res-player-2">0</span>/<span id="max-res-player-2">0</span></span>
-                <span>Mazzo: <span id="deck-count-2">--</span></span>
-                <span>Cimitero: <span id="graveyard-count-2">0</span></span>
+        <!-- ==================== Barra Inferiore ==================== -->
+        <div class="bottom-bar">
+            <div class="bar-controls-left bar-info" id="info-player-1-bottom">
+                 <!-- Info G1 verranno popolate qui da JS -->
+                 <span>G1:</span>
+                 <span>HP: <span id="hp-player-1">20</span></span>
+                 <span>RES: <span id="res-player-1">0</span>/<span id="max-res-player-1">0</span></span>
             </div>
-
-             <!-- Contenuto Principale Giocatore 2 (Campo + Mano/Zone) -->
-             <div class="player-main-content">
-
-                 <!-- Zona Mano / Deck / Cimitero Giocatore 2 (Verticale) -->
-                 <!-- NOTA: Ordine invertito per avere zone a sinistra e campo a destra -->
-                 <div class="hand-deck-graveyard-zone">
-                    <div class="hand" id="hand-player-2">
-                         <!-- Placeholder mano G2 verranno aggiunti qui da JS -->
-                    </div>
-                    <div class="deck-graveyard">
-                        <div class="deck deck-inactive" id="deck-player-2" title="Mazzo Giocatore 2"> <!-- Mazzo G2 non interagibile -->
-                             Mazzo (<span id="deck-count-2-display">--</span>)
-                        </div>
-                        <div class="graveyard" id="graveyard-player-2" data-player-id="2" title="Visualizza Cimitero Giocatore 2">
-                            Cimitero (<span id="graveyard-count-2-display">0</span>)
-                        </div>
-                    </div>
-                </div>
-
-                 <!-- Campo di Battaglia Giocatore 2 (GRID) -->
-                 <div class="field" id="field-player-2">
-                     <!-- 18 Celle (6 righe x 3 colonne) generate da JS o manualmente -->
-                     <!-- Esempio manuale: -->
-                    <div class="grid-cell" data-row="0" data-col="0"></div>
-                    <div class="grid-cell" data-row="0" data-col="1"></div>
-                    <div class="grid-cell" data-row="0" data-col="2"></div>
-                    <div class="grid-cell" data-row="1" data-col="0"></div>
-                    <div class="grid-cell" data-row="1" data-col="1"></div>
-                    <div class="grid-cell" data-row="1" data-col="2"></div>
-                    <div class="grid-cell" data-row="2" data-col="0"></div>
-                    <div class="grid-cell" data-row="2" data-col="1"></div>
-                    <div class="grid-cell" data-row="2" data-col="2"></div>
-                    <div class="grid-cell" data-row="3" data-col="0"></div>
-                    <div class="grid-cell" data-row="3" data-col="1"></div>
-                    <div class="grid-cell" data-row="3" data-col="2"></div>
-                    <div class="grid-cell" data-row="4" data-col="0"></div>
-                    <div class="grid-cell" data-row="4" data-col="1"></div>
-                    <div class="grid-cell" data-row="4" data-col="2"></div>
-                    <div class="grid-cell" data-row="5" data-col="0"></div>
-                    <div class="grid-cell" data-row="5" data-col="1"></div>
-                    <div class="grid-cell" data-row="5" data-col="2"></div>
-                     <!-- Fine Celle Griglia G2 -->
-                 </div>
-
-            </div> <!-- Fine player-main-content G2 -->
-
-            <!-- Controlli/Info Giocatore 2 (in basso, potrebbero essere vuoti o con info aggiuntive) -->
-            <div class="player-controls-info">
-                 <!-- Spazio vuoto o per eventuali log/info specifici dell'avversario -->
+            <div class="bar-controls-center">
+                <!-- Spazio centrale vuoto o per altri controlli? -->
             </div>
+            <div class="bar-controls-right">
+                 <button id="end-turn-button">Passa Turno</button>
+            </div>
+        </div>
 
-        </div> <!-- Fine Area Giocatore 2 -->
-
-    </div> <!-- Fine game-container -->
+    </div> <!-- Fine game-layout-container -->
 
 
-    <!-- ==================== Modali (fuori dal container principale) ==================== -->
+    <!-- ==================== Modali (fuori dal layout principale) ==================== -->
     <div id="graveyard-modal" class="modal"> <div class="modal-content"> <span class="close-button" data-modal-id="graveyard-modal">×</span> <h3 id="modal-title-graveyard">Cimitero</h3> <div id="modal-body-graveyard"></div> </div> </div>
     <div id="log-modal" class="modal"> <div class="modal-content"> <span class="close-button" data-modal-id="log-modal">×</span> <h3 id="modal-title-log">Log di Gioco</h3> <div id="modal-body-log"></div> </div> </div>
 
