@@ -10,90 +10,171 @@
 //    Se non hai immagini, puoi usare placeholder o commentare la linea 'illustrazione'.
 
 const cardDatabase = [
-  {
-    id: "c001", // ID univoco della carta (c = creatura)
-    nome: "Ratto Gigante",
-    illustrazione: "images/c001.jpg", // Percorso relativo all'immagine
-    forza: 1,         // Valore di attacco/forza
-    punti_ferita: 1,  // Valore di difesa/punti ferita
-    costo: 1,         // Costo per giocare la carta
-    abilita: "Una creatura base senza abilità speciali." // Testo dell'abilità
-  },
-  {
-    id: "c002",
-    nome: "Guardiano del Cancello",
-    illustrazione: "images/c002.jpg",
-    forza: 0,
-    punti_ferita: 4,
-    costo: 2,
-    abilita: "Provocazione (Le creature nemiche devono attaccare questa creatura se possibile)." // Esempio abilità keyword
-  },
-  {
-    id: "c003",
-    nome: "Esploratore Elfico",
-    illustrazione: "images/c003.jpg",
-    forza: 2,
-    punti_ferita: 1,
-    costo: 2,
-    abilita: "Quando entra in gioco, puoi guardare la prima carta del tuo mazzo." // Esempio effetto "Entra in Gioco"
-  },
-   {
-    id: "c004",
-    nome: "Guerriero Veterano",
-    illustrazione: "images/c004.jpg",
-    forza: 3,
-    punti_ferita: 3,
-    costo: 3,
-    abilita: "" // Nessuna abilità (stringa vuota)
-  },
-   {
-    id: "c005",
-    nome: "Golem d'Ossa",
-    illustrazione: "images/c005.jpg",
-    forza: 4,
-    punti_ferita: 5,
-    costo: 5,
-    abilita: "Lento (Non può attaccare nel turno in cui viene giocato)."
-  },
-  {
-    id: "m001", // ID univoco (m = magia/evento/abilità)
-    nome: "Dardo Incantato",
-    illustrazione: "images/m001.jpg",
-    forza: null,        // Non applicabile per questa magia (usiamo null)
-    punti_ferita: null, // Non applicabile (usiamo null)
-    costo: 1,
-    abilita: "Infliggi 1 danno a qualsiasi bersaglio." // Effetto diretto
-  },
-  {
-    id: "m002",
-    nome: "Crescita Rigogliosa",
-    illustrazione: "images/m002.jpg",
-    forza: null,
-    punti_ferita: null,
-    costo: 2,
-    abilita: "Ottieni 1 cristallo di mana massimo permanente." // Modifica stato giocatore
-  },
-  {
-    id: "m003",
-    nome: "Pesca Miracolosa",
-    illustrazione: "images/m003.jpg",
-    forza: null,
-    punti_ferita: null,
-    costo: 3,
-    abilita: "Pesca 2 carte." // Azione di gioco
-  }
-  // --- Aggiungi qui le tue altre carte ---
-  /* Modello da copiare:
-  {
-    id: "unique_id", // Es: "c006", "m004", ecc.
-    nome: "Nome della Carta",
-    illustrazione: "images/unique_id.jpg",
-    forza: X, // Usa null se non applicabile
-    punti_ferita: Y, // Usa null se non applicabile
-    costo: Z,
-    abilita: "Descrizione dell'abilità o effetto."
-  },
-  */
+    {
+        id: "c001", // ID univoco della carta (c = creatura)
+        nome: "Ratto Gigante",
+        illustrazione: "images/1.jpg", // Percorso relativo all'immagine
+        forza: 1,         // Valore di attacco/forza
+        punti_ferita: 1,  // Valore di difesa/punti ferita
+        costo: 1,         // Costo per giocare la carta
+        abilita: "Una creatura base senza abilità speciali." // Testo dell'abilità
+    },
+    {
+        id: "c002",
+        nome: "Guardiano del Cancello",
+        illustrazione: "images/2.jpg",
+        forza: 0,
+        punti_ferita: 4,
+        costo: 2,
+        abilita: "Provocazione (Le creature nemiche devono attaccare questa creatura se possibile)." // Esempio abilità keyword
+    },
+    {
+        id: "c003",
+        nome: "Esploratore Elfico",
+        illustrazione: "images/3.jpg",
+        forza: 2,
+        punti_ferita: 1,
+        costo: 2,
+        abilita: "Quando entra in gioco, puoi guardare la prima carta del tuo mazzo." // Esempio effetto "Entra in Gioco"
+    },
+    {
+        id: "c004",
+        nome: "Guerriero Veterano",
+        illustrazione: "images/4.jpg",
+        forza: 3,
+        punti_ferita: 3,
+        costo: 3,
+        abilita: "" // Nessuna abilità (stringa vuota)
+    },
+    {
+        id: "c005",
+        nome: "Golem d'Ossa",
+        illustrazione: "images/5.jpg",
+        forza: 4,
+        punti_ferita: 5,
+        costo: 5,
+        abilita: "Lento (Non può attaccare nel turno in cui viene giocato)."
+    },
+    {
+        id: "c006",
+        nome: "Golem d'Ossa",
+        illustrazione: "images/6.jpg",
+        forza: 4,
+        punti_ferita: 5,
+        costo: 5,
+        abilita: "Lento (Non può attaccare nel turno in cui viene giocato)."
+    },
+    {
+        id: "c007",
+        nome: "Golem d'Ossa",
+        illustrazione: "images/7.jpg",
+        forza: 4,
+        punti_ferita: 5,
+        costo: 5,
+        abilita: "Lento (Non può attaccare nel turno in cui viene giocato)."
+    },
+    {
+        id: "c008",
+        nome: "Golem d'Ossa",
+        illustrazione: "images/8.jpg",
+        forza: 4,
+        punti_ferita: 5,
+        costo: 5,
+        abilita: "Lento (Non può attaccare nel turno in cui viene giocato)."
+    },
+    {
+        id: "c009",
+        nome: "Golem d'Ossa",
+        illustrazione: "images/9.jpg",
+        forza: 4,
+        punti_ferita: 5,
+        costo: 5,
+        abilita: "Lento (Non può attaccare nel turno in cui viene giocato)."
+    },
+    {
+        id: "c010",
+        nome: "Golem d'Ossa",
+        illustrazione: "images/10.jpg",
+        forza: 4,
+        punti_ferita: 5,
+        costo: 5,
+        abilita: "Lento (Non può attaccare nel turno in cui viene giocato)."
+    },
+    {
+        id: "c011",
+        nome: "Golem d'Ossa",
+        illustrazione: "images/11.jpg",
+        forza: 4,
+        punti_ferita: 5,
+        costo: 5,
+        abilita: "Lento (Non può attaccare nel turno in cui viene giocato)."
+    },
+    {
+        id: "c012",
+        nome: "Golem d'Ossa",
+        illustrazione: "images/12.jpg",
+        forza: 4,
+        punti_ferita: 5,
+        costo: 5,
+        abilita: "Lento (Non può attaccare nel turno in cui viene giocato)."
+    },
+    {
+        id: "c013",
+        nome: "Golem d'Ossa",
+        illustrazione: "images/13.jpg",
+        forza: 4,
+        punti_ferita: 5,
+        costo: 5,
+        abilita: "Lento (Non può attaccare nel turno in cui viene giocato)."
+    },
+    {
+        id: "c014",
+        nome: "Golem d'Ossa",
+        illustrazione: "images/14.jpg",
+        forza: 4,
+        punti_ferita: 5,
+        costo: 5,
+        abilita: "Lento (Non può attaccare nel turno in cui viene giocato)."
+    },
+    {
+        id: "c015",
+        nome: "Golem d'Ossa",
+        illustrazione: "images/15.jpg",
+        forza: 4,
+        punti_ferita: 5,
+        costo: 5,
+        abilita: "Lento (Non può attaccare nel turno in cui viene giocato)."
+    },
+    {
+        id: "c016",
+        nome: "Golem d'Ossa",
+        illustrazione: "images/16.jpg",
+        forza: 4,
+        punti_ferita: 5,
+        costo: 5,
+        abilita: "Lento (Non può attaccare nel turno in cui viene giocato)."
+    },
+    {
+        id: "m001",
+        nome: "Pesca Miracolosa",
+        illustrazione: "images/17.jpg",
+        forza: null,
+        punti_ferita: null,
+        costo: 3,
+        abilita: "Pesca 2 carte." // Azione di gioco
+    }
+    // --- Aggiungi qui le tue altre carte ---
+    /* Modello da copiare:
+    {
+      id: "unique_id", // Es: "c006", "m004", ecc.
+      nome: "Nome della Carta",
+      illustrazione: "images/unique_id.jpg",
+      forza: X, // Usa null se non applicabile
+      punti_ferita: Y, // Usa null se non applicabile
+      costo: Z,
+      abilita: "Descrizione dell'abilità o effetto."
+    },
+    */
 ];
 
 
