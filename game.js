@@ -1,8 +1,9 @@
 /* File: game.js */
-/* (Versione finale - Corretto filtro tipi in initGame) */
+/* (Versione Finale - Fasi, Movimento Base, Setup Completo) */
 
 /* ==================== 1. Riferimenti Elementi DOM ==================== */
 const turnIndicator = document.getElementById('turn-indicator');
+const turnPlayerIndicator = document.getElementById('turn-player-indicator'); /* Nuovo */
 const endTurnButton = document.getElementById('end-turn-button');
 const hpPlayer1 = document.getElementById('hp-player-1');
 const resPlayer1 = document.getElementById('res-player-1');
@@ -38,33 +39,44 @@ const activeTerrainDisplayArea = document.querySelector('#active-terrain-display
 const heroDisplayP1 = document.querySelector('#hero-display-player-1 .card-display-area');
 const objectiveDisplayP1 = document.querySelector('#objective-display-player-1 .card-display-area');
 const heroDisplayP2 = document.querySelector('#hero-display-player-2 .card-display-area');
+const phaseIndicatorContainer = document.querySelector('.phase-indicator-container');
+const phaseSteps = {
+    acquisizione: document.getElementById('phase-acquisizione'),
+    azione: document.getElementById('phase-azione'),
+    scarto: document.getElementById('phase-scarto'),
+};
+
 
 /* ==================== 2. Stato del Gioco ==================== */
 let gameState = {
     currentPlayerId: 1,
     turnNumber: 1,
     activeTerrainId: null,
+    currentPhase: 'acquisizione', /* Valori: 'acquisizione', 'azione', 'scarto' */
+    selectedEntityForMovement: null, /* instanceId dell'unità selezionata */
+    validMovementCells: [], /* Array di {row, col} */
     players: [
-        { id: 1, heroId: null, objectiveId: null, objectiveCompleted: false, hp: 20, maxResources: 0, currentResources: 0, deck: [], hand: [], field: [], graveyard: [] },
-        { id: 2, heroId: null, objectiveId: null, objectiveCompleted: false, hp: 20, maxResources: 0, currentResources: 0, deck: [], hand: [], field: [], graveyard: [] }
+        { id: 1, heroId: null, objectiveId: null, objectiveCompleted: false, hp: 20, maxResources: 0, currentResources: 0, deck: [], hand: [], field: [], graveyard: [], maxHandSize: 5 },
+        { id: 2, heroId: null, objectiveId: null, objectiveCompleted: false, hp: 20, maxResources: 0, currentResources: 0, deck: [], hand: [], field: [], graveyard: [], maxHandSize: 5 }
     ],
-    grid: { rows: 6, cols: 6 }, /* Griglia 6x6 */
+    grid: { rows: 6, cols: 6 },
     maxCreaturesPerPlayer: 4,
+    maxTurnsPerPlayer: 10,
     gameEnded: false,
     winner: null,
 };
 
 /* ==================== 3. Funzioni Utilità ==================== */
 function shuffleArray(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[array[i], array[j]] = [array[j], array[i]]; } }
-function addLogMessage(message) { if (!logModalBody) { console.error("Elemento corpo modale log non trovato!"); return; } const p = document.createElement('p'); const now = new Date(); const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`; p.innerHTML = `<span class="log-timestamp">[${timeString} T:${gameState.turnNumber}]</span> ${message}`; logModalBody.appendChild(p); logModalBody.scrollTop = logModalBody.scrollHeight; }
+function addLogMessage(message) { if (!logModalBody) { console.error("Elemento corpo modale log non trovato!"); return; } const p = document.createElement('p'); const now = new Date(); const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`; p.innerHTML = `<span class="log-timestamp">[${timeString} T:${gameState.turnNumber} P:${gameState.currentPlayerId} ${gameState.currentPhase.toUpperCase()}]</span> ${message}`; logModalBody.appendChild(p); logModalBody.scrollTop = logModalBody.scrollHeight; }
 function getPlayerState(playerId) { return gameState.players.find(p => p.id === playerId) || null; }
 function getOpponentState(currentPlayerId) { const opponentId = currentPlayerId === 1 ? 2 : 1; return getPlayerState(opponentId); }
 function generateInstanceId(playerId, cardId) { return `p${playerId}_${cardId}_${Date.now()}_${Math.floor(Math.random() * 1000)}`; }
 function findEmptyPlacementSpot(playerId) {
     const playerState = getPlayerState(playerId);
     if (!playerState) return null;
-    const currentCreatureCount = playerState.field.filter(entity => { const cardData = getCardData(entity.cardId); return cardData && (cardData.tipo === 'unità' || cardData.tipo === 'eroe'); }).length;
-    if (currentCreatureCount >= gameState.maxCreaturesPerPlayer) { console.log(`Player ${playerId} al limite creature (${gameState.maxCreaturesPerPlayer}).`); return null; }
+    const currentCreatureCount = playerState.field.filter(entity => { const cardData = getCardData(entity.cardId); return cardData && (cardData.tipo?.trim().toLowerCase() === 'unità' || cardData.tipo?.trim().toLowerCase() === 'eroe'); }).length;
+    if (currentCreatureCount >= gameState.maxCreaturesPerPlayer) { /* console.log(`Player ${playerId} al limite creature (${gameState.maxCreaturesPerPlayer}).`); */ return null; }
     const placementRow = (playerId === 1) ? gameState.grid.rows - 1 : 0;
     for (let c = 0; c < gameState.grid.cols; c++) {
         const isOccupied = gameState.players.some(p => p.field.some(creature => creature.position.row === placementRow && creature.position.col === c ));
@@ -75,22 +87,14 @@ function findEmptyPlacementSpot(playerId) {
 function getModifiedStats(entityState) {
     if (!entityState) return { attacco: 0, punti_ferita: 0, currentHp: 0, keywords: [] };
     const baseCardData = getCardData(entityState.cardId);
-    let modStats = {
-        attacco: baseCardData?.attacco ?? 0,
-        punti_ferita: baseCardData?.punti_ferita ?? 0,
-        currentHp: entityState.currentHp,
-        keywords: [...(baseCardData?.keywords || [])],
-    };
-    if (gameState.activeTerrainId) {
-        const terrainData = getCardData(gameState.activeTerrainId);
-        /* Esempio Effetto Terreno */
-        if (gameState.activeTerrainId === 't001' && baseCardData?.tipo === 'unità') {
-             modStats.attacco += 1;
-        }
-        /* Aggiungere logica per altri terreni qui */
-    }
-    /* Aggiungere logica per altri effetti qui */
+    let modStats = { attacco: baseCardData?.attacco ?? 0, punti_ferita: baseCardData?.punti_ferita ?? 0, currentHp: entityState.currentHp, keywords: [...(baseCardData?.keywords || [])], };
+    if (gameState.activeTerrainId) { const terrainData = getCardData(gameState.activeTerrainId); if (gameState.activeTerrainId === 't001' && baseCardData?.tipo?.trim().toLowerCase() === 'unità') { modStats.attacco += 1; } /* Altri terreni */ } /* Altri effetti */
     return modStats;
+}
+function isValidAndEmptyCell(row, col) {
+    if (row < 0 || row >= gameState.grid.rows || col < 0 || col >= gameState.grid.cols) { return false; }
+    const isOccupied = gameState.players.some(p => p.field.some(entity => entity.position.row === row && entity.position.col === col) );
+    return !isOccupied;
 }
 
 /* ==================== 4. Funzioni di Rendering ==================== */
@@ -109,148 +113,28 @@ function renderCard(cardId, location = 'hand', instanceId = null) {
     if (!gameState.gameEnded) { if (location === 'hand' && gameState.currentPlayerId === 1 && getPlayerState(1)?.hand.includes(cardId)) { cardDiv.addEventListener('click', handleHandCardClick); } else if (location === 'field') { cardDiv.addEventListener('click', handleFieldCardClick); } } return cardDiv;
 }
 function renderHand(playerId) { const playerState = getPlayerState(playerId); const handElement = (playerId === 1) ? handAreaP1 : handAreaP2; if (!playerState || !handElement) return; handElement.innerHTML = ''; if (playerId === 1) { playerState.hand.forEach(cardId => { const cardElement = renderCard(cardId, 'hand'); handElement.appendChild(cardElement); }); } else { for (let i = 0; i < playerState.hand.length; i++) { const placeholder = document.createElement('div'); placeholder.classList.add('card-placeholder'); placeholder.title = "Carta avversaria"; handElement.appendChild(placeholder); } } }
-function renderField() { if (!sharedFieldElement) { console.error("Elemento campo condiviso (field-shared) non trovato!"); return; } sharedFieldElement.innerHTML = ''; const creatureMap = new Map(); gameState.players.forEach(player => { player.field.forEach(entity => { const posKey = `${entity.position.row}-${entity.position.col}`; creatureMap.set(posKey, entity); }); }); for (let r = 0; r < gameState.grid.rows; r++) { for (let c = 0; c < gameState.grid.cols; c++) { const cell = document.createElement('div'); cell.classList.add('grid-cell'); cell.dataset.row = r; cell.dataset.col = c; let cellTitle = `Cella (F:${r}, C:${c})`; if (r === 0) { cell.classList.add('initial-placement-g2'); cellTitle = `Zona Schieramento G2 (F:${r}, C:${c})`; } else if (r === gameState.grid.rows - 1) { cell.classList.add('initial-placement-g1'); cellTitle = `Zona Schieramento G1 (F:${r}, C:${c})`; } const posKey = `${r}-${c}`; const entityInCell = creatureMap.get(posKey); if (entityInCell) { const cardElement = renderCard(entityInCell.cardId, 'field', entityInCell.instanceId); cardElement.classList.add(entityInCell.ownerId === 1 ? 'player1-card' : 'player2-card'); if (entityInCell.isHero) { cardElement.classList.add('is-hero'); } cell.appendChild(cardElement); cellTitle += ` - Occupata da G${entityInCell.ownerId}: ${getCardData(entityInCell.cardId)?.nome || '?'} (HP: ${entityInCell.currentHp})`; } else { cell.addEventListener('click', handleGridCellClick); } cell.title = cellTitle; sharedFieldElement.appendChild(cell); } } }
+function renderField() { if (!sharedFieldElement) { console.error("Elemento campo condiviso (field-shared) non trovato!"); return; } sharedFieldElement.innerHTML = ''; const creatureMap = new Map(); gameState.players.forEach(player => { player.field.forEach(entity => { const posKey = `${entity.position.row}-${entity.position.col}`; creatureMap.set(posKey, entity); }); }); for (let r = 0; r < gameState.grid.rows; r++) { for (let c = 0; c < gameState.grid.cols; c++) { const cell = document.createElement('div'); cell.classList.add('grid-cell'); cell.dataset.row = r; cell.dataset.col = c; let cellTitle = `Cella (F:${r}, C:${c})`; if (r === 0) { cell.classList.add('initial-placement-g2'); cellTitle = `Zona Sch. G2 (F:${r}, C:${c})`; } else if (r === gameState.grid.rows - 1) { cell.classList.add('initial-placement-g1'); cellTitle = `Zona Sch. G1 (F:${r}, C:${c})`; } const posKey = `${r}-${c}`; const entityInCell = creatureMap.get(posKey); if (entityInCell) { const cardElement = renderCard(entityInCell.cardId, 'field', entityInCell.instanceId); cardElement.classList.add(entityInCell.ownerId === 1 ? 'player1-card' : 'player2-card'); if (entityInCell.isHero) { cardElement.classList.add('is-hero'); } if (entityInCell.instanceId === gameState.selectedEntityForMovement) { cardElement.classList.add('selected-for-move'); } cell.appendChild(cardElement); cellTitle += ` - G${entityInCell.ownerId}: ${getCardData(entityInCell.cardId)?.nome || '?'} (HP: ${entityInCell.currentHp})`; } else { const isMovableCell = gameState.validMovementCells.some(validCell => validCell.row === r && validCell.col === c); if (isMovableCell) { cell.classList.add('movement-valid'); cellTitle += ' - Movimento possibile'; } cell.addEventListener('click', handleGridCellClick); } cell.title = cellTitle; sharedFieldElement.appendChild(cell); } } }
 function renderPlayerInfo(playerId) { const playerState = getPlayerState(playerId); if (!playerState) return; if (playerId === 1) { if (hpPlayer1) hpPlayer1.textContent = playerState.hp; if (resPlayer1) resPlayer1.textContent = playerState.currentResources; if (maxResPlayer1) maxResPlayer1.textContent = playerState.maxResources; if (deckCountP1Sidebar) deckCountP1Sidebar.textContent = playerState.deck.length; if (deckP1Element) deckP1Element.title = `Mazzo G1 (${playerState.deck.length})`; if (graveyardCountP1Display) graveyardCountP1Display.textContent = playerState.graveyard.length; } else { if (hpPlayer2) hpPlayer2.textContent = playerState.hp; if (resPlayer2) resPlayer2.textContent = playerState.currentResources; if (maxResPlayer2) maxResPlayer2.textContent = playerState.maxResources; if (deckCountP2Sidebar) deckCountP2Sidebar.textContent = playerState.deck.length; if (deckP2Element) deckP2Element.title = `Mazzo G2 (${playerState.deck.length})`; if (graveyardCountP2Display) graveyardCountP2Display.textContent = playerState.graveyard.length; } }
 function renderGameInfo() { if (activeTerrainDisplayArea) { activeTerrainDisplayArea.innerHTML = ''; if (gameState.activeTerrainId) { const terrainCardData = getCardData(gameState.activeTerrainId); if (terrainCardData) { const terrainCardElement = renderCard(gameState.activeTerrainId, 'terrain'); activeTerrainDisplayArea.appendChild(terrainCardElement); } else { activeTerrainDisplayArea.textContent = "(Errore Terreno)"; } } else { activeTerrainDisplayArea.textContent = "(Nessun Terreno)"; } } gameState.players.forEach(player => { const heroDisplay = (player.id === 1) ? heroDisplayP1 : heroDisplayP2; const objectiveDisplay = (player.id === 1) ? objectiveDisplayP1 : null; if (heroDisplay) { heroDisplay.innerHTML = ''; if (player.heroId) { const heroCardData = getCardData(player.heroId); if (heroCardData) { const heroInstance = player.field.find(e => e.cardId === player.heroId && e.isHero); const heroCardElement = renderCard(player.heroId, 'hero-display', heroInstance?.instanceId); heroDisplay.appendChild(heroCardElement); heroDisplay.title = `${heroCardData.nome} (Eroe)`; } else { heroDisplay.textContent = "(Errore Eroe)"; } } else { heroDisplay.textContent = "(Nessun Eroe)"; } } if (objectiveDisplay && player.id === 1) { objectiveDisplay.innerHTML = ''; if (player.objectiveId) { const objectiveCardData = getCardData(player.objectiveId); if (objectiveCardData) { const objectiveCardElement = renderCard(player.objectiveId, 'objective-display'); objectiveDisplay.appendChild(objectiveCardElement); objectiveDisplay.title = `${objectiveCardData.nome} (Obiettivo)`; } else { objectiveDisplay.textContent = "(Errore Obiettivo)"; } } else { objectiveDisplay.textContent = "(Nessun Obiettivo)"; } } }); }
-function renderGame() { renderPlayerInfo(1); renderPlayerInfo(2); renderGameInfo(); renderHand(1); renderHand(2); renderField(); if(turnIndicator) turnIndicator.textContent = gameState.currentPlayerId; if(endTurnButton) endTurnButton.disabled = gameState.gameEnded || gameState.currentPlayerId !== 1; if(showLogButton) showLogButton.disabled = gameState.gameEnded; if (!gameState.gameEnded) { if (gameState.currentPlayerId === 1) { if(rightSidebar) rightSidebar.classList.add('active-turn'); if(leftSidebar) leftSidebar.classList.remove('active-turn'); if(deckP1Element) deckP1Element.classList.remove('deck-inactive'); } else { if(rightSidebar) rightSidebar.classList.remove('active-turn'); if(leftSidebar) leftSidebar.classList.add('active-turn'); if(deckP1Element) deckP1Element.classList.add('deck-inactive'); } checkWinConditions(); /* Controlla vittoria dopo il render */ } else { if(rightSidebar) rightSidebar.classList.remove('active-turn'); if(leftSidebar) leftSidebar.classList.remove('active-turn'); if(deckP1Element) deckP1Element.classList.add('deck-inactive'); if(deckP2Element) deckP2Element.classList.add('deck-inactive'); } }
+function renderGame() { renderPlayerInfo(1); renderPlayerInfo(2); renderGameInfo(); renderHand(1); renderHand(2); renderField(); if(turnIndicator) turnIndicator.textContent = gameState.turnNumber; if(turnPlayerIndicator) turnPlayerIndicator.textContent = `G${gameState.currentPlayerId}`; const isPlayer1ActionPhase = gameState.currentPlayerId === 1 && gameState.currentPhase === 'azione'; if(endTurnButton) endTurnButton.disabled = gameState.gameEnded || !isPlayer1ActionPhase; if(showLogButton) showLogButton.disabled = gameState.gameEnded; if (phaseIndicatorContainer) { for (const phase in phaseSteps) { if (phaseSteps[phase]) { phaseSteps[phase].classList.remove('active-phase', 'clickable'); if (!gameState.gameEnded && gameState.currentPlayerId === 1 && ((phase === 'azione' && gameState.currentPhase === 'acquisizione') || (phase === 'scarto' && gameState.currentPhase === 'azione')) ) { phaseSteps[phase].classList.add('clickable'); } } } if (phaseSteps[gameState.currentPhase]) { phaseSteps[gameState.currentPhase].classList.add('active-phase'); } } if (!gameState.gameEnded) { if (gameState.currentPlayerId === 1) { if(rightSidebar) rightSidebar.classList.add('active-turn'); if(leftSidebar) leftSidebar.classList.remove('active-turn'); if(deckP1Element) deckP1Element.classList.remove('deck-inactive'); } else { if(rightSidebar) rightSidebar.classList.remove('active-turn'); if(leftSidebar) leftSidebar.classList.add('active-turn'); if(deckP1Element) deckP1Element.classList.add('deck-inactive'); } } else { if(rightSidebar) rightSidebar.classList.remove('active-turn'); if(leftSidebar) leftSidebar.classList.remove('active-turn'); if(deckP1Element) deckP1Element.classList.add('deck-inactive'); if(deckP2Element) deckP2Element.classList.add('deck-inactive'); } checkWinConditions(); /* Check vittoria dopo render */ }
 
-/* ==================== 5. Logica Azioni di Gioco ==================== */
-function startTurn(playerId) { if (gameState.gameEnded) return; console.log(`Inizio turno ${gameState.turnNumber} per Giocatore ${playerId}`); addLogMessage(`Inizio turno per Giocatore ${playerId}.`); gameState.currentPlayerId = playerId; const player = getPlayerState(playerId); if (!player) return; if (player.maxResources < 10) { player.maxResources++; } player.currentResources = player.maxResources; player.field.forEach(c => { const cardData = getCardData(c.cardId); c.canAttackThisTurn = !cardData?.keywords?.includes('Lento'); }); drawCard(playerId); renderGame(); if (playerId === 2) { if(endTurnButton) endTurnButton.disabled = true; addLogMessage("Giocatore 2 sta pensando..."); setTimeout(runOpponentTurn, 1500); } else { if(endTurnButton) endTurnButton.disabled = false; } }
-function drawCard(playerId) { const player = getPlayerState(playerId); if (!player || gameState.gameEnded) return; if (player.deck.length > 0) { const drawnCardId = player.deck.shift(); player.hand.push(drawnCardId); addLogMessage(`Giocatore ${playerId} pesca una carta.`); console.log(`Giocatore ${playerId} pesca ${drawnCardId}`); } else { player.hp -= 1; addLogMessage(`Giocatore ${playerId} ha finito le carte e subisce 1 danno da fatica! HP: ${player.hp}`); console.warn(`Giocatore ${playerId} ha tentato di pescare da un mazzo vuoto.`); checkWinConditions(); } }
-function handleEndTurnClick() { if (gameState.gameEnded || gameState.currentPlayerId !== 1) { console.warn("Impossibile passare il turno ora."); return; } console.log("Giocatore 1 passa il turno."); addLogMessage("Giocatore 1 termina il suo turno."); checkWinConditions(); if (gameState.gameEnded) return; gameState.turnNumber++; startTurn(2); }
-function handleHandCardClick(event) {
-    if (gameState.gameEnded || gameState.currentPlayerId !== 1) return;
-    const cardElement = event.currentTarget;
-    const cardId = cardElement.dataset.cardId;
-    const cardData = getCardData(cardId);
-    const player = getPlayerState(1);
-    if (!player || !cardData) return;
-    console.log(`Tentativo di giocare: ${cardData.nome} (Tipo: ${cardData.tipo}, ID: ${cardId})`);
+/* ==================== 5. Logica Azioni di Gioco e Fasi ==================== */
+function startPhase(phaseName) { if (gameState.gameEnded) return; console.log(`Avvio Fase: ${phaseName} per G${gameState.currentPlayerId} (T${gameState.turnNumber})`); gameState.currentPhase = phaseName; addLogMessage(`Inizio Fase ${phaseName.charAt(0).toUpperCase() + phaseName.slice(1)}.`); const player = getPlayerState(gameState.currentPlayerId); if (!player) return; if (gameState.selectedEntityForMovement) { clearMovementSelection(); } switch (phaseName) { case 'acquisizione': if (player.maxResources < 10) { player.maxResources++; } player.currentResources = player.maxResources; addLogMessage(`Eco: ${player.currentResources}/${player.maxResources}.`); drawCard(gameState.currentPlayerId); player.field.forEach(c => { const cardData = getCardData(c.cardId); c.canAttackThisTurn = !cardData?.keywords?.includes('Lento'); }); break; case 'azione': if(endTurnButton && gameState.currentPlayerId === 1) endTurnButton.disabled = false; break; case 'scarto': if(endTurnButton) endTurnButton.disabled = true; startScartoPhase(); break; default: console.error(`Fase sconosciuta: ${phaseName}`); } renderGame(); }
+function advancePhase() { if (gameState.gameEnded) return; const currentPhase = gameState.currentPhase; const currentPlayerId = gameState.currentPlayerId; let nextPhase = ''; let nextPlayerId = currentPlayerId; let nextTurnNumber = gameState.turnNumber; console.log(`Tentativo avanzamento da ${currentPhase} per G${currentPlayerId}`); if (currentPhase === 'acquisizione') { nextPhase = 'azione'; } else if (currentPhase === 'azione') { nextPhase = 'scarto'; } else if (currentPhase === 'scarto') { addLogMessage(`Fine turno ${gameState.turnNumber} per G${currentPlayerId}.`); if (currentPlayerId === 2 && gameState.turnNumber >= gameState.maxTurnsPerPlayer) { endGame(0, `Limite ${gameState.maxTurnsPerPlayer} turni`); return; } nextPlayerId = currentPlayerId === 1 ? 2 : 1; if (nextPlayerId === 1) { nextTurnNumber++; } nextPhase = 'acquisizione'; gameState.turnNumber = nextTurnNumber; gameState.currentPlayerId = nextPlayerId; } if (nextPhase) { startPhase(nextPhase); } else { console.error("Errore avanzamento fase!"); } }
+function drawCard(playerId) { const player = getPlayerState(playerId); if (!player || gameState.gameEnded) return; if (player.deck.length > 0) { const drawnCardId = player.deck.shift(); player.hand.push(drawnCardId); addLogMessage(`G${playerId} pesca ${getCardData(drawnCardId)?.nome || 'carta'}.`); console.log(`G${playerId} pesca ${drawnCardId}`); } else { player.hp -= 1; addLogMessage(`G${playerId} finisce carte -> 1 Danno Fatica! HP: ${player.hp}`); console.warn(`G${playerId} pesca da mazzo vuoto.`); checkWinConditions(); } }
+function handleEndTurnClick() { if (gameState.gameEnded || gameState.currentPlayerId !== 1 || gameState.currentPhase !== 'azione') { console.warn("Non puoi passare ora."); return; } console.log("G1 termina Fase Azione."); addLogMessage("G1 passa a Fase Scarto."); advancePhase(); }
+function handleHandCardClick(event) { if (gameState.gameEnded || gameState.currentPlayerId !== 1 || gameState.currentPhase !== 'azione') { if(!gameState.gameEnded && gameState.currentPhase !== 'azione') addLogMessage("Puoi giocare carte solo in Fase Azione."); return; } const cardElement = event.currentTarget; const cardId = cardElement.dataset.cardId; const cardData = getCardData(cardId); const player = getPlayerState(1); if (!player || !cardData) return; if (player.currentResources >= cardData.costo) { const typeLower = cardData.tipo?.trim().toLowerCase(); const isPlaceable = typeLower === 'unità' || typeLower === 'eroe'; let placementSpot = null; if (isPlaceable) { placementSpot = findEmptyPlacementSpot(player.id); if (!placementSpot) { addLogMessage(`Nessun posto/Limite per ${cardData.nome}.`); return; } } player.currentResources -= cardData.costo; const cardIndex = player.hand.indexOf(cardId); if (cardIndex > -1) { player.hand.splice(cardIndex, 1); } else { console.error("Carta non trovata!", cardId, player.hand); player.currentResources += cardData.costo; return; } if (isPlaceable) { if (!placementSpot) { console.error("Errore piazzamento!"); addLogMessage(`! Errore ${cardData.nome} !`); } else { const instanceId = generateInstanceId(player.id, cardId); const newEntity = { cardId: cardId, instanceId: instanceId, position: placementSpot, currentHp: cardData.punti_ferita, canAttackThisTurn: !cardData.keywords?.includes('Lento'), ownerId: player.id, isHero: typeLower === 'eroe' }; player.field.push(newEntity); addLogMessage(`G${player.id} schiera ${cardData.nome} [${cardData.tipo.toUpperCase()}] in F:${placementSpot.row}, C:${placementSpot.col}.`); processKeywords(cardId, 'onPlay', {playerId: player.id, instanceId: instanceId}); } } else if (typeLower === 'potere' || typeLower === 'terreno' || typeLower === 'obiettivo') { addLogMessage(`G${player.id} ${typeLower === 'potere' ? 'usa' : (typeLower === 'terreno' ? 'gioca' : 'rivela')} ${cardData.nome}.`); processKeywords(cardId, 'onPlay', {playerId: player.id}); player.graveyard.push(cardId); } else { addLogMessage(`Tipo non gestito: ${cardData.tipo}. Scartata.`); console.warn(`Tipo non gestito: ${cardData.tipo}`); player.graveyard.push(cardId); } renderGame(); } else { addLogMessage(`Eco insufficiente (${cardData.costo}).`); } }
+function processKeywords(cardId, trigger, context) { const cardData = getCardData(cardId); if (cardData && cardData.keywords && cardData.keywords.length > 0) { console.log(`Processa keywords [${cardData.keywords.join(', ')}] per ${cardId} su trigger ${trigger}... (Non implementato)`); } }
+function handleFieldCardClick(event) { if (gameState.gameEnded || gameState.currentPhase !== 'azione') { if(!gameState.gameEnded) addLogMessage("Puoi interagire solo in Fase Azione."); return; } const cardElement = event.currentTarget; const instanceId = cardElement.dataset.instanceId; if (!instanceId) return; const player = getPlayerState(gameState.currentPlayerId); const entityState = player?.field.find(c => c.instanceId === instanceId); if (!entityState || entityState.ownerId !== gameState.currentPlayerId) { console.log("Non puoi selezionare unità avversarie o non valide."); if (gameState.selectedEntityForMovement) { clearMovementSelection(); renderField(); } return; } if (gameState.selectedEntityForMovement === instanceId) { console.log(`Deselezionata: ${getCardData(entityState.cardId).nome}`); clearMovementSelection(); } else { console.log(`Selezionata per movimento: ${getCardData(entityState.cardId).nome}`); clearMovementSelection(); gameState.selectedEntityForMovement = instanceId; calculateValidMoves(entityState); } renderField(); }
+function calculateValidMoves(entityState) { gameState.validMovementCells = []; if (!entityState) return; const { row: r, col: c } = entityState.position; const potentialMoves = [ { row: r - 1, col: c }, { row: r + 1, col: c }, { row: r, col: c - 1 }, { row: r, col: c + 1 }, ]; potentialMoves.forEach(move => { if (isValidAndEmptyCell(move.row, move.col)) { gameState.validMovementCells.push(move); } }); console.log("Celle valide per movimento:", gameState.validMovementCells); }
+function clearMovementSelection() { gameState.selectedEntityForMovement = null; gameState.validMovementCells = []; clearHighlights(); /* Rimuove classi CSS */ }
+function clearHighlights() { document.querySelectorAll('.selected-for-move, .movement-valid').forEach(el => el.classList.remove('selected-for-move', 'movement-valid')); }
+function handleGridCellClick(event) { if (gameState.gameEnded || gameState.currentPhase !== 'azione') return; const cell = event.currentTarget; const clickedRow = parseInt(cell.dataset.row, 10); const clickedCol = parseInt(cell.dataset.col, 10); if (gameState.selectedEntityForMovement) { const isValidMove = gameState.validMovementCells.some( validCell => validCell.row === clickedRow && validCell.col === clickedCol ); if (isValidMove) { const player = getPlayerState(gameState.currentPlayerId); const entityToMove = player?.field.find(e => e.instanceId === gameState.selectedEntityForMovement); if (entityToMove) { const oldPos = { ...entityToMove.position }; entityToMove.position.row = clickedRow; entityToMove.position.col = clickedCol; const cardData = getCardData(entityToMove.cardId); addLogMessage(`G${player.id} muove ${cardData.nome} da [${oldPos.row},${oldPos.col}] a [${clickedRow},${clickedCol}].`); console.log(`Mosso ${entityToMove.instanceId} a ${clickedRow},${clickedCol}`); /* Aggiungere flag hasMoved? */ clearMovementSelection(); renderField(); } else { console.error("Errore: Entità selezionata non trovata!"); clearMovementSelection(); renderField(); } } else { /* Cliccato cella non valida */ addLogMessage("Movimento annullato (cella non valida)."); clearMovementSelection(); renderField(); } } else { /* Cliccato cella vuota senza selezione */ console.log(`Cliccata cella vuota: Fila ${clickedRow}, Colonna ${clickedCol}`); } }
+function checkWinConditions() { if (gameState.gameEnded) return; const player1 = getPlayerState(1); const player2 = getPlayerState(2); const terrainCard = gameState.activeTerrainId ? getCardData(gameState.activeTerrainId) : null; if (player1.hp <= 0) { endGame(2, "Eroe G1 sconfitto"); return true; } if (player2.hp <= 0) { endGame(1, "Eroe G2 sconfitto"); return true; } if (terrainCard) { /* Logica vittoria terreno */ } const currentPlayer = getPlayerState(gameState.currentPlayerId); const currentObjective = currentPlayer.objectiveId ? getCardData(currentPlayer.objectiveId) : null; if (currentObjective && !currentPlayer.objectiveCompleted) { /* Logica vittoria obiettivo */ } return false; }
+function startScartoPhase() { const player = getPlayerState(gameState.currentPlayerId); if (!player || gameState.gameEnded) return; addLogMessage("Inizio Fase Scarto."); const cardsToDiscardCount = player.hand.length - player.maxHandSize; if (cardsToDiscardCount > 0) { addLogMessage(`Mano ${player.hand.length}/${player.maxHandSize}. Scartare ${cardsToDiscardCount}.`); const discarded = player.hand.splice(0, cardsToDiscardCount); player.graveyard.push(...discarded); discarded.forEach(cardId => addLogMessage(`G${player.id} scarta ${getCardData(cardId)?.nome || 'carta'}.`)); renderHand(player.id); } else { addLogMessage("Nessuna carta da scartare."); } let healedCount = 0; player.field.forEach(entity => { const baseData = getCardData(entity.cardId); if (baseData && entity.currentHp < baseData.punti_ferita) { entity.currentHp = baseData.punti_ferita; healedCount++; } }); if (healedCount > 0) { addLogMessage(`Curate ${healedCount} unità/eroi.`); renderField(); } if (checkWinConditions()) { return; } setTimeout(() => { if (!gameState.gameEnded) { advancePhase(); } }, 800); }
 
-    if (player.currentResources >= cardData.costo) {
-        const isPlaceable = cardData.tipo === 'unità' || cardData.tipo === 'eroe';
-        let placementSpot = null;
-        if (isPlaceable) {
-            if (player.field.length >= gameState.maxCreaturesPerPlayer) {
-                addLogMessage(`Non puoi schierare ${cardData.nome}: massimo numero di creature (${gameState.maxCreaturesPerPlayer}) raggiunto.`);
-                return;
-            }
-            placementSpot = findEmptyPlacementSpot(player.id);
-            if (!placementSpot) {
-                addLogMessage(`Non puoi schierare ${cardData.nome}: nessuna posizione libera nella tua zona di schieramento.`);
-                return;
-            }
-        }
-
-        /* Azione senza targeting complesso */
-        console.log(`Azione per ${cardData.nome} (senza effetti/targeting complessi).`);
-        player.currentResources -= cardData.costo;
-        const cardIndex = player.hand.indexOf(cardId);
-        if (cardIndex > -1) { player.hand.splice(cardIndex, 1); }
-        else { console.error("Carta non trovata in mano!", cardId, player.hand); player.currentResources += cardData.costo; return; }
-
-        if (isPlaceable) {
-            if (!placementSpot) { console.error("Errore logico: placementSpot non definito!"); addLogMessage(`! Errore piazzamento ${cardData.nome} !`); }
-            else {
-                const instanceId = generateInstanceId(player.id, cardId);
-                const newEntity = { cardId: cardId, instanceId: instanceId, position: placementSpot, currentHp: cardData.punti_ferita, canAttackThisTurn: !cardData.keywords?.includes('Lento'), ownerId: player.id, isHero: cardData.tipo === 'eroe' };
-                player.field.push(newEntity);
-                addLogMessage(`Giocatore ${player.id} schiera ${cardData.nome} [${cardData.tipo.toUpperCase()}] in F:${placementSpot.row}, C:${placementSpot.col}.`);
-                processKeywords(cardId, 'onPlay', {playerId: player.id, instanceId: instanceId}); /* Passa contesto base */
-            }
-        } else if (cardData.tipo === 'potere' || cardData.tipo === 'terreno' || cardData.tipo === 'obiettivo') {
-            addLogMessage(`Giocatore ${player.id} ${cardData.tipo === 'potere' ? 'usa' : (cardData.tipo === 'terreno' ? 'gioca' : 'rivela')} ${cardData.nome}.`);
-            processKeywords(cardId, 'onPlay', {playerId: player.id}); /* Passa contesto base */
-            player.graveyard.push(cardId);
-        } else {
-            addLogMessage(`Tipo carta non gestito: ${cardData.tipo} per ${cardData.nome}. Carta scartata.`);
-            console.warn(`Tipo carta non gestito: ${cardData.tipo}`);
-            player.graveyard.push(cardId);
-        }
-        renderGame();
-
-    } /* Fine blocco if (risorse sufficienti) */
-    else {
-        addLogMessage(`Risorse insufficienti per giocare ${cardData.nome} (costa ${cardData.costo}, hai ${player.currentResources}).`);
-    }
-} /* Fine handleHandCardClick */
-
-function processKeywords(cardId, trigger, context) {
-    const cardData = getCardData(cardId);
-    if (cardData && cardData.keywords && cardData.keywords.length > 0) {
-        console.log(`Processa keywords [${cardData.keywords.join(', ')}] per ${cardId} su trigger ${trigger}... (Non implementato)`);
-        /* Qui andrà la futura logica degli effetti basati su keyword */
-    }
-}
-function handleFieldCardClick(event) {
-    if (gameState.gameEnded) return;
-    const cardElement = event.currentTarget;
-    const cellElement = cardElement.closest('.grid-cell');
-    const instanceId = cardElement.dataset.instanceId;
-    if (!instanceId || !cellElement) return;
-    let entityState = null; let ownerId = null;
-    for(const player of gameState.players) { const found = player.field.find(c => c.instanceId === instanceId); if (found) { entityState = found; ownerId = player.id; break; } }
-    if (!entityState) { console.error(`Stato non trovato per ${instanceId}`); return; }
-    const cardData = getCardData(entityState.cardId);
-    const modStats = getModifiedStats(entityState);
-    console.log(`Cliccato su ${cardData.nome} (Instance: ${instanceId}) in campo, Proprietario: ${ownerId}`);
-    addLogMessage(`Cliccato su ${cardData.nome} (${entityState.currentHp} HP) in F:${entityState.position.row}, C:${entityState.position.col}.`);
-    /* Logica futura: Attacco, Abilità da keywords */
-}
-function clearHighlights() { /* Non più usato attivamente */ }
-function clearTargetingState() { /* Non più usato attivamente */ }
-function handleGridCellClick(event) { const cell = event.currentTarget; if (!cell.querySelector('.card')) { const row = cell.dataset.row; const col = cell.dataset.col; console.log(`Cliccata cella vuota: Fila ${row}, Colonna ${col}`); } }
-function checkWinConditions() {
-    if (gameState.gameEnded) return;
-    const player1 = getPlayerState(1); const player2 = getPlayerState(2);
-    const terrainCard = gameState.activeTerrainId ? getCardData(gameState.activeTerrainId) : null;
-
-    /* 1. Controllo HP */
-    if (player1.hp <= 0) { endGame(2, "Eroe G1 sconfitto"); return; }
-    if (player2.hp <= 0) { endGame(1, "Eroe G2 sconfitto"); return; }
-
-    /* 2. Controllo Terreno */
-    if (terrainCard) {
-        /* DA IMPLEMENTARE: Logica specifica vittoria terreno */
-        /* console.log("Controllo vittoria Terreno (Logica specifica non implementata)"); */
-    }
-
-    /* 3. Controllo Obiettivo (Giocatore corrente) */
-    const currentPlayer = getPlayerState(gameState.currentPlayerId);
-    const currentObjective = currentPlayer.objectiveId ? getCardData(currentPlayer.objectiveId) : null;
-    if (currentObjective && !currentPlayer.objectiveCompleted) {
-        /* DA IMPLEMENTARE: Logica specifica vittoria obiettivo */
-         /* console.log(`Controllo obiettivo G${currentPlayer.id} (Logica specifica non implementata)`); */
-    }
-}
-
-/* ==================== 6. Logica Avversario (IA Semplice Aggiornata) ==================== */
-function runOpponentTurn() {
-    if (gameState.gameEnded || gameState.currentPlayerId !== 2) return;
-    const player = getPlayerState(2); const opponent = getPlayerState(1);
-    if (!player || !opponent) return;
-    addLogMessage("Giocatore 2 (IA) sta agendo...");
-
-    const playCardAI = () => {
-        let cardPlayed = false;
-        const playableCards = player.hand.map((id, index) => ({ id, index, data: getCardData(id) })).filter(c => c.data && player.currentResources >= c.data.costo).sort((a, b) => b.data.costo - a.data.costo);
-        for (const cardToPlay of playableCards) {
-            const cardId = cardToPlay.id; const cardData = cardToPlay.data; const isPlaceable = cardData.tipo === 'unità' || cardData.tipo === 'eroe'; let placementSpot = null;
-            if (!isPlaceable) { console.log(`IA: Salta ${cardData.nome} (tipo ${cardData.tipo}).`); continue; }
-            if (player.field.length >= gameState.maxCreaturesPerPlayer) { console.log(`IA: Limite creature.`); continue; }
-            placementSpot = findEmptyPlacementSpot(player.id);
-            if (!placementSpot) { console.log(`IA: Nessun posto per ${cardData.nome}.`); continue; }
-            console.log(`IA: Gioca ${cardData.nome}`); player.currentResources -= cardData.costo; const currentHandIndex = player.hand.indexOf(cardId); if (currentHandIndex > -1) { player.hand.splice(currentHandIndex, 1); } else { console.error(`IA Errore: Carta ${cardId} non trovata!`); player.currentResources += cardData.costo; continue; }
-            const instanceId = generateInstanceId(player.id, cardId); const newEntity = { cardId: cardId, instanceId: instanceId, position: placementSpot, currentHp: cardData.punti_ferita, canAttackThisTurn: !cardData.keywords?.includes('Lento'), ownerId: player.id, isHero: cardData.tipo === 'eroe' }; player.field.push(newEntity); addLogMessage(`Giocatore ${player.id} schiera ${cardData.nome} in Fila ${placementSpot.row}, Colonna ${placementSpot.col}.`); processKeywords(cardId, 'onPlay', {playerId: player.id, instanceId: instanceId});
-            cardPlayed = true; renderGame(); break; /* Gioca solo una carta */
-        } return cardPlayed;
-    };
-    const attackAI = () => {
-        let didAttack = false; const attackers = player.field.filter(c => { const d = getCardData(c.cardId); const modStats = getModifiedStats(c); return modStats.attacco > 0 && c.canAttackThisTurn; });
-        if (attackers.length > 0) { const attackerInstance = attackers[0]; const attackerData = getCardData(attackerInstance.cardId); const modStats = getModifiedStats(attackerInstance); const damage = modStats.attacco; if (opponent) { opponent.hp -= damage; attackerInstance.canAttackThisTurn = false; addLogMessage(`${attackerData.nome} (IA) attacca Giocatore 1 per ${damage} danni (ATT: ${modStats.attacco}). HP G1: ${opponent.hp}`); didAttack = true; renderGame(); } } return didAttack;
-    };
-    setTimeout(() => { if (gameState.gameEnded || gameState.currentPlayerId !== 2) return; const played = playCardAI(); if (!played) { addLogMessage("Giocatore 2 non gioca carte."); } setTimeout(() => { if (gameState.gameEnded || gameState.currentPlayerId !== 2) return; const attacked = attackAI(); setTimeout(() => { if (gameState.gameEnded || gameState.currentPlayerId !== 2) return; checkWinConditions(); if(gameState.gameEnded) return; console.log("Giocatore 2 (IA) termina il turno."); addLogMessage("Giocatore 2 termina il suo turno."); if (!gameState.gameEnded) { startTurn(1); } }, 700); }, 800); }, 500);
-}
+/* ==================== 6. Logica Avversario (IA Semplice) ==================== */
+function runOpponentTurn() { if (gameState.gameEnded || gameState.currentPlayerId !== 2) return; const player = getPlayerState(2); const opponent = getPlayerState(1); if (!player || !opponent) return; addLogMessage("Giocatore 2 (IA) sta agendo..."); const playCardAI = () => { let cardPlayed = false; const playableCards = player.hand.map((id, index) => ({ id, index, data: getCardData(id) })).filter(c => c.data && player.currentResources >= c.data.costo).sort((a, b) => b.data.costo - a.data.costo); for (const cardToPlay of playableCards) { const cardId = cardToPlay.id; const cardData = cardToPlay.data; const typeLower = cardData.tipo?.trim().toLowerCase(); const isPlaceable = typeLower === 'unità' || typeLower === 'eroe'; let placementSpot = null; if (!isPlaceable) { continue; } placementSpot = findEmptyPlacementSpot(player.id); if (!placementSpot) { continue; } console.log(`IA: Gioca ${cardData.nome}`); player.currentResources -= cardData.costo; const currentHandIndex = player.hand.indexOf(cardId); if (currentHandIndex > -1) { player.hand.splice(currentHandIndex, 1); } else { console.error(`IA Errore: Carta ${cardId} non trovata!`); player.currentResources += cardData.costo; continue; } const instanceId = generateInstanceId(player.id, cardId); const newEntity = { cardId: cardId, instanceId: instanceId, position: placementSpot, currentHp: cardData.punti_ferita, canAttackThisTurn: !cardData.keywords?.includes('Lento'), ownerId: player.id, isHero: typeLower === 'eroe' }; player.field.push(newEntity); addLogMessage(`G${player.id} schiera ${cardData.nome} in Fila ${placementSpot.row}, Colonna ${placementSpot.col}.`); processKeywords(cardId, 'onPlay', {playerId: player.id, instanceId: instanceId}); cardPlayed = true; renderGame(); break; } return cardPlayed; }; const attackAI = () => { let didAttack = false; const attackers = player.field.filter(c => { const d = getCardData(c.cardId); const modStats = getModifiedStats(c); return modStats.attacco > 0 && c.canAttackThisTurn; }); if (attackers.length > 0) { const attackerInstance = attackers[0]; const attackerData = getCardData(attackerInstance.cardId); const modStats = getModifiedStats(attackerInstance); const damage = modStats.attacco; if (opponent) { opponent.hp -= damage; attackerInstance.canAttackThisTurn = false; addLogMessage(`${attackerData.nome} (IA) attacca G1 per ${damage} danni (ATT: ${modStats.attacco}). HP G1: ${opponent.hp}`); didAttack = true; renderGame(); } } return didAttack; }; setTimeout(() => { if (gameState.gameEnded || gameState.currentPlayerId !== 2) return; addLogMessage("IA - Fase Azione (Simulata)"); const played = playCardAI(); if (!played) { addLogMessage("IA non gioca carte."); } setTimeout(() => { if (gameState.gameEnded || gameState.currentPlayerId !== 2) return; addLogMessage("IA: Salta Movimento"); const attacked = attackAI(); setTimeout(() => { if (gameState.gameEnded || gameState.currentPlayerId !== 2) return; startPhase('scarto'); }, 700); }, 800); }, 500); }
 
 /* ==================== 7. Gestione Modale ==================== */
 function openModal(modalId) { const modalElement = document.getElementById(modalId); if (modalElement) { modalElement.classList.add('active'); } else { console.error(`Modale con ID "${modalId}" non trovato.`); } }
@@ -268,44 +152,48 @@ function addEventListeners() {
     else { console.error("Bottone 'Mostra Log' non trovato!"); }
     closeButtons.forEach(button => { button.addEventListener('click', () => { const modalToClose = button.closest('.modal'); if (modalToClose) { closeModal(modalToClose.id); } }); });
     modals.forEach(modalElement => { modalElement.addEventListener('click', (event) => { if (event.target === modalElement) { closeModal(modalElement.id); } }); });
-    /* Listener contextmenu rimosso */
-    document.addEventListener('keydown', (event) => { if (event.key === 'Escape') { closeAllModals(); } }); /* Escape chiude solo modali */
+    if (phaseIndicatorContainer) { phaseIndicatorContainer.addEventListener('click', (event) => { if (gameState.gameEnded || gameState.currentPlayerId !== 1) return; const clickedStep = event.target.closest('.phase-step'); if (!clickedStep || !clickedStep.classList.contains('clickable')) return; const targetPhase = clickedStep.id.replace('phase-', ''); if (targetPhase === 'azione' && gameState.currentPhase === 'acquisizione') { addLogMessage("G1 passa a Fase Azione."); advancePhase(); } else if (targetPhase === 'scarto' && gameState.currentPhase === 'azione') { addLogMessage("G1 passa a Fase Scarto."); advancePhase(); } }); }
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+             if (gameState.selectedEntityForMovement) { console.log("Deselezione via ESC."); addLogMessage("Selezione annullata."); clearMovementSelection(); renderField(); }
+             else { closeAllModals(); }
+        } else if (event.key === ' ' || event.code === 'Space') {
+             if (gameState.gameEnded || gameState.currentPlayerId !== 1) return;
+             if (document.activeElement === document.body || document.activeElement === null) { event.preventDefault(); }
+             if (gameState.currentPhase === 'acquisizione') { addLogMessage("G1 passa a Fase Azione (Spazio)."); advancePhase(); }
+             else if (gameState.currentPhase === 'azione') { addLogMessage("G1 passa a Fase Scarto (Spazio)."); advancePhase(); }
+        }
+    });
 }
 
 /* ==================== 9. Inizializzazione Gioco ==================== */
-function placeInitialHeroes() { console.log("Piazzamento Eroi..."); gameState.players.forEach(player => { if (player.heroId) { const heroData = getCardData(player.heroId); const placementSpot = findEmptyPlacementSpot(player.id); if (placementSpot && heroData) { const instanceId = generateInstanceId(player.id, player.heroId); const heroEntity = { cardId: player.heroId, instanceId: instanceId, position: placementSpot, currentHp: heroData.punti_ferita, canAttackThisTurn: true, ownerId: player.id, isHero: true }; player.field.push(heroEntity); addLogMessage(`Giocatore ${player.id} schiera l'eroe ${heroData.nome} in F:${placementSpot.row}, C:${placementSpot.col}.`); } else { console.error(`Impossibile piazzare eroe ${heroData?.nome || player.heroId} per G${player.id}.`); addLogMessage(`! Errore: Impossibile piazzare eroe per G${player.id}!`); } } else { console.error(`Giocatore ${player.id} non ha un heroId!`); } }); }
+function placeInitialHeroes() { console.log("Piazzamento Eroi..."); gameState.players.forEach(player => { if (player.heroId) { const heroData = getCardData(player.heroId); const placementSpot = findEmptyPlacementSpot(player.id); if (placementSpot && heroData) { const instanceId = generateInstanceId(player.id, player.heroId); /* Usa punti ferita da cardData se presenti, altrimenti 0 per sicurezza */ const initialHp = heroData.punti_ferita ?? 0; const heroEntity = { cardId: player.heroId, instanceId: instanceId, position: placementSpot, currentHp: initialHp, canAttackThisTurn: true, ownerId: player.id, isHero: true }; player.field.push(heroEntity); addLogMessage(`G${player.id} schiera ${heroData.nome} in F:${placementSpot.row}, C:${placementSpot.col}.`); } else { console.error(`Impossibile piazzare eroe ${heroData?.nome || player.heroId} per G${player.id}.`); addLogMessage(`! Errore: Impossibile piazzare eroe per G${player.id}!`); } } else { console.error(`Giocatore ${player.id} non ha un heroId!`); } }); }
 function initGame() {
     console.log("Inizializzazione gioco...");
     if (typeof getCardData !== 'function' || typeof getAllCardIds !== 'function') { console.error("Errore critico: Funzioni getCardData o getAllCardIds non trovate."); alert("Errore critico: Impossibile caricare le funzioni delle carte."); return; }
-    const allCards = cardDatabase; const allCardIds = getAllCardIds();
-    if (!allCards || allCards.length === 0 || !allCardIds || !allCardIds.length === 0) { console.error("Impossibile inizializzare: nessuna carta trovata."); alert("Errore critico: Impossibile caricare le carte."); return; }
-    /* Filtro tipi con normalizzazione */
-    const heroCards = allCards.filter(card => card.tipo?.trim().toLowerCase() === 'eroe');
-    const terrainCards = allCards.filter(card => card.tipo?.trim().toLowerCase() === 'terreno');
-    const objectiveCards = allCards.filter(card => card.tipo?.trim().toLowerCase() === 'obiettivo');
-    const deckCards = allCards.filter(card => { const typeLower = card.tipo?.trim().toLowerCase(); return typeLower === 'unità' || typeLower === 'potere'; });
-
+    const allCards = cardDatabase;
+    if (!allCards || allCards.length === 0) { console.error("Impossibile inizializzare: nessuna carta trovata."); alert("Errore critico: Impossibile caricare le carte."); return; }
+    const heroCards = allCards.filter(card => card.tipo?.trim().toLowerCase() === 'eroe'); const terrainCards = allCards.filter(card => card.tipo?.trim().toLowerCase() === 'terreno'); const objectiveCards = allCards.filter(card => card.tipo?.trim().toLowerCase() === 'obiettivo'); const deckCards = allCards.filter(card => { const typeLower = card.tipo?.trim().toLowerCase(); return typeLower === 'unità' || typeLower === 'potere'; });
     console.log(`Trovati: ${heroCards.length} Eroi, ${terrainCards.length} Terreni, ${objectiveCards.length} Obiettivi, ${deckCards.length} Carte Mazzo.`);
     if (heroCards.length < 1 || terrainCards.length < 1 || objectiveCards.length < 1) { console.error("Errore: Non ci sono abbastanza carte Eroe/Terreno/Obiettivo definite!"); alert("Errore: Mancano carte Eroe, Terreno o Obiettivo!"); return; }
     const terrainIndex = Math.floor(Math.random() * terrainCards.length); const activeTerrain = terrainCards[terrainIndex];
-    let heroIndexes = [-1, -1]; heroIndexes[0] = Math.floor(Math.random() * heroCards.length); heroIndexes[1] = heroCards.length > 1 ? heroCards.findIndex((h, i) => i !== heroIndexes[0]) : heroIndexes[0];
+    let heroIndexes = [-1, -1]; heroIndexes[0] = Math.floor(Math.random() * heroCards.length); heroIndexes[1] = heroCards.length > 1 ? heroCards.findIndex((h, i) => i !== heroIndexes[0]) : heroIndexes[0]; if (heroIndexes[1] < 0) heroIndexes[1] = 0; /* Fallback se c'è un solo eroe */
     const heroP1 = heroCards[heroIndexes[0]]; const heroP2 = heroCards[heroIndexes[1]];
-    let objectiveIndexes = [-1, -1]; objectiveIndexes[0] = Math.floor(Math.random() * objectiveCards.length); objectiveIndexes[1] = objectiveCards.length > 1 ? objectiveCards.findIndex((o, i) => i !== objectiveIndexes[0]) : objectiveIndexes[0];
+    let objectiveIndexes = [-1, -1]; objectiveIndexes[0] = Math.floor(Math.random() * objectiveCards.length); objectiveIndexes[1] = objectiveCards.length > 1 ? objectiveCards.findIndex((o, i) => i !== objectiveIndexes[0]) : objectiveIndexes[0]; if (objectiveIndexes[1] < 0) objectiveIndexes[1] = 0; /* Fallback se c'è un solo obiettivo */
     const objectiveP1 = objectiveCards[objectiveIndexes[0]]; const objectiveP2 = objectiveCards[objectiveIndexes[1]];
-    const deckCardIds = deckCards.map(card => card.id); const deckP1 = []; const deckP2 = []; const copiesPerCardInDeck = 2;
-    for (let i = 0; i < copiesPerCardInDeck; i++) { deckP1.push(...deckCardIds); deckP2.push(...deckCardIds); }
-    shuffleArray(deckP1); shuffleArray(deckP2);
-    /* Usa punti ferita eroe da cards.js se disponibile, altrimenti 20 */
+    const deckCardPoolIds = deckCards.map(card => card.id); const createPlayerDeck = () => { let deck = []; let cardCounts = {}; const maxDeckSize = 25; const maxCopies = 2; let shuffledPool = [...deckCardPoolIds]; shuffleArray(shuffledPool); for (const cardId of shuffledPool) { if (deck.length >= maxDeckSize) break; const currentCount = cardCounts[cardId] || 0; if (currentCount < maxCopies) { deck.push(cardId); cardCounts[cardId] = currentCount + 1; } } if (deck.length < maxDeckSize) { console.warn(`Mazzo creato con ${deck.length} carte (< ${maxDeckSize}).`); } return deck; };
+    const deckP1 = createPlayerDeck(); const deckP2 = createPlayerDeck();
+    /* Usa punti ferita eroe da cards.js, default a 20 se null o non trovato */
     const initialHpP1 = getCardData(heroP1.id)?.punti_ferita ?? 20;
     const initialHpP2 = getCardData(heroP2.id)?.punti_ferita ?? 20;
-    gameState = { currentPlayerId: 1, turnNumber: 1, activeTerrainId: activeTerrain.id, players: [ { id: 1, heroId: heroP1.id, objectiveId: objectiveP1.id, objectiveCompleted: false, hp: initialHpP1, maxResources: 1, currentResources: 1, deck: deckP1, hand: [], field: [], graveyard: [] }, { id: 2, heroId: heroP2.id, objectiveId: objectiveP2.id, objectiveCompleted: false, hp: initialHpP2, maxResources: 1, currentResources: 1, deck: deckP2, hand: [], field: [], graveyard: [] } ], grid: { rows: 6, cols: 6 }, maxCreaturesPerPlayer: 4, gameEnded: false, winner: null, };
-    addLogMessage("Benvenuto nel Test LCG con Griglia 6x6!"); addLogMessage(`Terreno: ${activeTerrain.nome}.`); addLogMessage(`Eroi: G1-${heroP1.nome} vs G2-${heroP2.nome}.`);
+    gameState = { currentPlayerId: 1, turnNumber: 1, activeTerrainId: activeTerrain.id, currentPhase: 'acquisizione', selectedEntityForMovement: null, validMovementCells: [], players: [ { id: 1, heroId: heroP1.id, objectiveId: objectiveP1.id, objectiveCompleted: false, hp: initialHpP1, maxResources: 0, currentResources: 0, deck: deckP1, hand: [], field: [], graveyard: [], maxHandSize: 5 }, { id: 2, heroId: heroP2.id, objectiveId: objectiveP2.id, objectiveCompleted: false, hp: initialHpP2, maxResources: 0, currentResources: 0, deck: deckP2, hand: [], field: [], graveyard: [], maxHandSize: 5 } ], grid: { rows: 6, cols: 6 }, maxCreaturesPerPlayer: 4, maxTurnsPerPlayer: 10, gameEnded: false, winner: null, };
+    addLogMessage("Benvenuto in Oathfall - Playtest!"); addLogMessage(`Terreno: ${activeTerrain.nome}.`); addLogMessage(`Eroi: G1-${heroP1.nome} vs G2-${heroP2.nome}.`);
     const initialHandSize = 3; for (let i = 0; i < initialHandSize; i++) { drawCard(1); drawCard(2); } console.log("Mani iniziali pescate.");
     placeInitialHeroes();
     addEventListeners();
-    startTurn(1);
+    startPhase('acquisizione'); /* Avvia la prima fase */
 }
-function endGame(winnerId, reason = "HP a zero") { if (gameState.gameEnded) return; gameState.gameEnded = true; gameState.winner = winnerId; /* clearHighlights(); -- Rimosso */ addLogMessage(`Partita terminata! Giocatore ${winnerId} ha vinto (${reason})!`); console.log(`Partita terminata! Vincitore: Giocatore ${winnerId}, Motivo: ${reason}`); renderGame(); document.querySelectorAll('.card.in-hand, .card.on-grid').forEach(card => { const clone = card.cloneNode(true); if(card.parentNode) card.parentNode.replaceChild(clone, card); }); setTimeout(() => alert(`Partita terminata! Giocatore ${winnerId} ha vinto! (${reason})`), 100); }
+function endGame(winnerId, reason = "HP a zero") { if (gameState.gameEnded) return; gameState.gameEnded = true; gameState.winner = winnerId; clearHighlights(); addLogMessage(`Partita terminata! Giocatore ${winnerId} ha vinto (${reason})!`); console.log(`Partita terminata! Vincitore: Giocatore ${winnerId}, Motivo: ${reason}`); renderGame(); document.querySelectorAll('.card.in-hand, .card.on-grid').forEach(card => { const clone = card.cloneNode(true); if(card.parentNode) card.parentNode.replaceChild(clone, card); }); setTimeout(() => alert(`Partita terminata! Giocatore ${winnerId} ha vinto! (${reason})`), 100); }
 
 /* ==================== Avvio ==================== */
 document.addEventListener('DOMContentLoaded', initGame);
