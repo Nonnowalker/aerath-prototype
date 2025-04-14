@@ -1,235 +1,165 @@
 // File: cards.js
-// Contiene i dati e la logica specifica delle carte.
+// Contiene i dati delle carte con la nuova struttura.
+// Gli effetti sono temporaneamente rimossi, verranno gestiti tramite 'keywords' in futuro.
 
-// IMPORTANTE:
-// Funzioni definite qui potrebbero usare funzioni definite in game.js
-// (come addLogMessage, getPlayerState, ecc.).
-// Assicurati che game.js sia caricato e che queste funzioni siano disponibili
-// globalmente o passate correttamente tramite l'oggetto 'context'.
+// IMPORTANTE: Le funzioni di effetto diretto (onPlay, getTargetInfo) sono state rimosse.
+// La logica del gioco dovrà essere adattata.
 
 const cardDatabase = [
     {
       id: "c001",
       nome: "Ratto Gigante",
-      illustrazione: "images/1.jpg",
-      forza: 1,
+      illustrazione: "images/c001.jpg",
+      attacco: 1,         // Precedentemente 'forza'
       punti_ferita: 1,
       costo: 1,
-      description: "Creatura base.", // Testo descrittivo per tooltip/UI
-      // Nessuna abilità speciale = nessun campo effetto specifico
+      tipo: "unità",      // Nuovo campo tipo
+      description: "Una semplice unità base.",
+      keywords: [],       // Campo keywords, vuoto per ora
     },
     {
       id: "c002",
       nome: "Guardiano del Cancello",
-      illustrazione: "images/2.jpg",
-      forza: 0,
+      illustrazione: "images/c002.jpg",
+      attacco: 0,
       punti_ferita: 4,
       costo: 2,
+      tipo: "unità",
       description: "Provocazione (Le creature nemiche devono attaccare questa creatura se possibile).",
-      // 'Provocazione' è una keyword, la sua logica sarà nel sistema di attacco
-      keywords: ["Provocazione"],
+      keywords: ["Provocazione"], // Mantenuto keyword esistente
     },
     {
       id: "c003",
       nome: "Esploratore Elfico",
-      illustrazione: "images/3.jpg",
-      forza: 2,
+      illustrazione: "images/c003.jpg",
+      attacco: 2,
       punti_ferita: 1,
       costo: 2,
-      description: "Quando entra in gioco, puoi guardare la prima carta del tuo mazzo.",
-      /**
-       * Effetto "Entra in Gioco".
-       * @param {object} context - Contiene lo stato e le funzioni helper necessarie.
-       * @param {object} context.gameState - Lo stato attuale del gioco.
-       * @param {number} context.playerId - L'ID del giocatore che ha giocato la carta.
-       * @param {string} context.cardId - L'ID di questa carta.
-       * @param {function} context.addLog - Riferimento a addLogMessage.
-       * @param {function} context.getPlayerState - Riferimento a getPlayerState.
-       * @param {function} context.getCardData - Riferimento a getCardData.
-       */
-      onPlay: function(context) {
-          const { gameState, playerId, addLog, getPlayerState, getCardData: internalGetCardData } = context;
-          const player = getPlayerState(playerId);
-          if (player && player.deck.length > 0) {
-              const topCardData = internalGetCardData(player.deck[0]);
-              addLog(`Esploratore Elfico: Guardi la prima carta del mazzo (${topCardData.nome}).`);
-              // Qui potresti mostrare l'info solo al giocatore attivo in un'interfaccia più avanzata
-          } else {
-              addLog("Esploratore Elfico: Mazzo vuoto!");
-          }
-          // Non richiede target, non ritorna nulla di speciale
-      }
+      tipo: "unità",
+      description: "Quando entra in gioco, puoi guardare la prima carta del tuo mazzo.", // Descrizione effetto passato
+      keywords: [], // Effetto 'onPlay' rimosso, dovrà diventare keyword/trigger
     },
-    {
+     {
       id: "c004",
       nome: "Guerriero Veterano",
-      illustrazione: "images/4.jpg",
-      forza: 3,
+      illustrazione: "images/c004.jpg",
+      attacco: 3,
       punti_ferita: 3,
       costo: 3,
-      description: "" // Nessuna abilità = nessuna descrizione speciale
+      tipo: "unità",
+      description: "", // Nessuna abilità = nessuna descrizione
+      keywords: [],
     },
-    {
+     {
       id: "c005",
       nome: "Golem d'Ossa",
-      illustrazione: "images/5.jpg",
-      forza: 4,
+      illustrazione: "images/c005.jpg",
+      attacco: 4,
       punti_ferita: 5,
       costo: 5,
+      tipo: "unità",
       description: "Lento (Non può attaccare nel turno in cui viene giocato).",
-      // 'Lento' è una keyword, la logica sarà nel sistema di attacco/controllo azioni
-      keywords: ["Lento"],
+      keywords: ["Lento"], // Mantenuto keyword esistente
     },
     {
       id: "m001",
       nome: "Dardo Incantato",
-      illustrazione: "images/17.jpg",
-      forza: null,
-      punti_ferita: null,
+      illustrazione: "images/m001.jpg",
+      attacco: null,        // N/A per poteri
+      punti_ferita: null, // N/A per poteri
       costo: 1,
-      description: "Infliggi 1 danno a una creatura bersaglio.",
-      /**
-       * Definisce i requisiti di targeting per giocare questa carta.
-       * @param {object} context - Contesto di gioco.
-       * @returns {object} Oggetto di configurazione del target.
-       */
-      getTargetInfo: function(context) {
-          return {
-              // Messaggio da mostrare all'utente
-              prompt: "Seleziona una creatura bersaglio per Dardo Incantato.",
-              // Funzione per validare un potenziale elemento target
-              filter: (targetElement, context) => {
-                  const targetCardId = targetElement?.dataset?.cardId;
-                  if (!targetCardId) return false;
-                  const targetCardData = context.getCardData(targetCardId);
-                  // Deve essere una carta e avere punti_ferita (quindi creatura)
-                  return targetElement.classList.contains('card') && targetCardData?.punti_ferita !== null;
-              },
-              // Azione da eseguire DOPO che un target valido è stato selezionato
-              onTargetSelected: function(targetElement, context) {
-                  const { gameState, playerId, cardId: sourceCardId, addLog, getPlayerState, getCardData: internalGetCardData } = context;
-                  const targetCardId = targetElement.dataset.cardId;
-                  const targetCardData = internalGetCardData(targetCardId);
-                  const targetOwnerId = targetElement.closest('.player-area').id.includes('player-area-1') ? 1 : 2;
-  
-                  addLog(`Dardo Incantato infligge 1 danno a ${targetCardData.nome}. (Effetto Log)`);
-                  console.log(`Dardo Incantato bersaglia ${targetCardData.nome} (ID: ${targetCardId}) del G${targetOwnerId}`);
-  
-                  // -------- INIZIO LOGICA DANNO (DA IMPLEMENTARE MEGLIO) --------
-                  // Trovare un modo per aggiornare gli HP della creatura nello stato del gioco.
-                  // Questo richiede che gameState.players[x].field sia un array di oggetti
-                  // con { id: '...', currentHp: X, ... } invece di solo ID stringa.
-                  // Esempio concettuale (NON FUNZIONANTE CON LO STATO ATTUALE):
-                  /*
-                  const targetPlayerField = getPlayerState(targetOwnerId)?.field;
-                  if (targetPlayerField) {
-                      const targetCardIndex = targetPlayerField.findIndex(card => card.id === targetCardId);
-                      if (targetCardIndex > -1) {
-                          targetPlayerField[targetCardIndex].currentHp -= 1;
-                          addLog(`${targetCardData.nome} ha ora ${targetPlayerField[targetCardIndex].currentHp} HP.`);
-                          // Controllare se la creatura è morta
-                          if (targetPlayerField[targetCardIndex].currentHp <= 0) {
-                              addLog(`${targetCardData.nome} è distrutto!`);
-                              // Spostare la carta dal campo al cimitero
-                              getPlayerState(targetOwnerId).graveyard.push(targetCardId);
-                              targetPlayerField.splice(targetCardIndex, 1);
-                              // Qui potrebbero attivarsi effetti "onDeath"
-                          }
-                      }
-                  }
-                  */
-                  // -------- FINE LOGICA DANNO (DA IMPLEMENTARE MEGLIO) --------
-  
-                  // Metti Dardo Incantato nel cimitero del giocatore che l'ha lanciato
-                  const sourcePlayer = getPlayerState(playerId);
-                  if (sourcePlayer) {
-                      sourcePlayer.graveyard.push(sourceCardId);
-                  }
-              }
-          };
-      }
-      // onPlay non è definito perché l'azione principale avviene dopo il targeting
+      tipo: "potere",     // Precedentemente magia/evento
+      description: "Infliggi 1 danno a un'unità bersaglio.", // Effetto passato, richiedeva target
+      keywords: [], // Funzioni getTargetInfo/onTargetSelected rimosse
     },
     {
       id: "m002",
       nome: "Crescita Rigogliosa",
       illustrazione: "images/m002.jpg",
-      forza: null,
+      attacco: null,
       punti_ferita: null,
       costo: 2,
-      description: "Ottieni 1 cristallo di mana massimo permanente (max 10).",
-      onPlay: function(context) {
-          const { gameState, playerId, addLog, getPlayerState } = context;
-          const player = getPlayerState(playerId);
-          if (player) {
-              if (player.maxResources < 10) {
-                  player.maxResources++;
-                  // Decidi se riempire anche le risorse attuali o no in base alle tue regole
-                  // player.currentResources = player.maxResources;
-                  addLog(`Crescita Rigogliosa: Ottieni 1 mana massimo (ora ${player.maxResources}).`);
-              } else {
-                  addLog("Crescita Rigogliosa: Mana massimo già raggiunto.");
-              }
-          }
-      }
+      tipo: "potere",
+      description: "Ottieni 1 cristallo di risorsa massimo permanente.", // Effetto passato
+      keywords: [], // Funzione onPlay rimossa
     },
     {
       id: "m003",
       nome: "Pesca Miracolosa",
       illustrazione: "images/m003.jpg",
-      forza: null,
+      attacco: null,
       punti_ferita: null,
       costo: 3,
-      description: "Pesca 2 carte.",
-      onPlay: function(context) {
-          const { gameState, playerId, addLog, drawCard: internalDrawCard } = context;
-           addLog("Pesca Miracolosa: Peschi 2 carte.");
-           // Usa la funzione drawCard passata nel contesto (o globale)
-           internalDrawCard(playerId);
-           internalDrawCard(playerId);
-      }
-    }
-    // --- Aggiungi qui le tue altre carte ---
-    /* Modello:
+      tipo: "potere",
+      description: "Pesca 2 carte.", // Effetto passato
+      keywords: [], // Funzione onPlay rimossa
+    },
+    // --- Esempi nuovi tipi (da creare con i tuoi dati) ---
+    {
+      id: "h001", // Prefisso 'h' per eroe (esempio)
+      nome: "Eroe Valoroso",
+      illustrazione: "images/h001.jpg", // Immagine placeholder
+      attacco: 2,
+      punti_ferita: 25, // Gli eroi potrebbero avere più vita?
+      costo: 0, // Gli eroi sono in gioco dall'inizio? Costo 0?
+      tipo: "eroe",
+      description: "Il tuo eroe principale.",
+      keywords: [],
+    },
      {
-      id: "...",
-      nome: "...",
-      illustrazione: "...",
-      forza: X | null,
+      id: "t001", // Prefisso 't' per terreno (esempio)
+      nome: "Foresta Antica",
+      illustrazione: "images/t001.jpg", // Immagine placeholder
+      attacco: null,
+      punti_ferita: null, // I terreni hanno vita? Forse durata?
+      costo: 2,
+      tipo: "terreno",
+      description: "Le tue unità guadagnano +1 Attacco mentre questo terreno è in gioco.",
+      keywords: [], // Effetto passivo/continuo
+    },
+     {
+      id: "o001", // Prefisso 'o' per obiettivo (esempio)
+      nome: "Conquista il Forte",
+      illustrazione: "images/o001.jpg", // Immagine placeholder
+      attacco: null,
+      punti_ferita: null, // Gli obiettivi hanno vita/contatore?
+      costo: 0, // Obiettivo iniziale?
+      tipo: "obiettivo",
+      description: "Vinci la partita se controlli 3 unità alla fine del tuo turno.",
+      keywords: [], // Condizione di vittoria
+    }
+    // --- Aggiungi qui le tue altre carte con la nuova struttura ---
+    /* Modello da copiare:
+    {
+      id: "unique_id",
+      nome: "Nome Carta",
+      illustrazione: "images/unique_id.jpg",
+      attacco: X | null,
       punti_ferita: Y | null,
       costo: Z,
-      description: "...",
-      keywords: ["...", "..."], // Opzionale
-      // Funzione per effetti immediati (se non richiede target)
-      onPlay: function(context) { ... }, // Opzionale
-      // Funzione per definire requisiti di targeting
-      getTargetInfo: function(context) { // Opzionale
-          return {
-              prompt: "...",
-              filter: (targetElement, context) => { ... return true/false; },
-              onTargetSelected: function(targetElement, context) { ... } // Effetto DOPO selezione
-          };
-      },
-      // Altre funzioni per altri trigger (onDeath, onAttack, canAttack, ecc.) potrebbero essere aggiunte qui
-     }
+      tipo: "eroe" | "unità" | "potere" | "terreno" | "obiettivo",
+      description: "Descrizione testuale della carta e/o del suo effetto.",
+      keywords: ["Keyword1", "Keyword2"] // Lista di keyword per effetti/abilità
+    },
     */
   ];
   
   
   // --- Funzione Helper (Mantenuta) ---
+  // Restituisce l'oggetto completo della carta dato l'ID
   function getCardData(cardId) {
       const cardData = cardDatabase.find(card => card.id === cardId);
       if (!cardData) {
           console.error(`Dati non trovati per la carta con ID: ${cardId}`);
-          // Fornisce un oggetto di default per evitare errori gravi
-          return { id: cardId, nome: "Carta Sconosciuta", costo: 0, description: "Errore - Dati non trovati", forza: null, punti_ferita: null };
+          // Restituisce un oggetto di default più semplice
+          return { id: cardId, nome: "Sconosciuta", costo: 0, tipo: "sconosciuto", description: "Errore Dati", attacco: null, punti_ferita: null, keywords:[] };
       }
-      return cardData; // Restituisce l'oggetto completo
+      return cardData;
   }
   
-  // Funzione per ottenere TUTTI gli ID delle carte nel database
+  // Funzione per ottenere TUTTI gli ID delle carte nel database (Mantenuta)
   function getAllCardIds() {
       return cardDatabase.map(card => card.id);
   }
   
-  console.log(`Caricate ${cardDatabase.length} definizioni di carte con effetti decentralizzati.`);
+  console.log(`Caricate ${cardDatabase.length} definizioni di carte (Nuova Struttura).`);
