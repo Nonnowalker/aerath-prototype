@@ -5,7 +5,7 @@ html, body { margin: 0; padding: 0; height: 100%; width: 100%; font-family: sans
 .game-layout-container { display: grid; grid-template-rows: auto 1fr auto; grid-template-columns: auto 1fr auto; height: 100vh; width: 100vw; background-color: #222; gap: 5px; padding: 5px; box-sizing: border-box; }
 
 /* Barre Superiore e Inferiore */
-.top-bar, .bottom-bar { grid-column: 1 / 4; background-color: #2a2a2a; padding: 5px 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; min-height: 45px; /* Aumentato leggermente per indicatore fase */ border: 1px solid #444; }
+.top-bar, .bottom-bar { grid-column: 1 / 4; background-color: #2a2a2a; padding: 5px 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; min-height: 45px; border: 1px solid #444; }
 .top-bar { grid-row: 1; }
 .bottom-bar { grid-row: 3; }
 
@@ -36,7 +36,7 @@ html, body { margin: 0; padding: 0; height: 100%; width: 100%; font-family: sans
     text-align: center;
     padding: 2px 8px;
     border-radius: 4px;
-    cursor: pointer; /* Suggerisce interattività */
+    cursor: default; /* Di base non cliccabile */
     transition: background-color 0.2s ease, color 0.2s ease, opacity 0.3s ease;
     opacity: 0.5; /* Fase non attiva è semi-trasparente */
     border: 1px solid transparent; /* Bordo placeholder */
@@ -48,9 +48,12 @@ html, body { margin: 0; padding: 0; height: 100%; width: 100%; font-family: sans
     font-weight: bold;
     border-color: #388E3C;
 }
+.phase-step.clickable { /* Classe aggiunta da JS se cliccabile */
+    cursor: pointer;
+}
 .phase-step.clickable:hover { /* Hover solo se cliccabile */
      background-color: #66BB6A;
-     opacity: 0.8;
+     opacity: 0.9; /* Leggermente meno opaco su hover */
 }
 .phase-step .phase-icon {
     font-size: 0.7em;
@@ -75,12 +78,12 @@ html, body { margin: 0; padding: 0; height: 100%; width: 100%; font-family: sans
     height: 2px; /* Spessore linea */
     background-color: #555; /* Colore linea */
     margin: 0 5px; /* Spazio intorno alla linea */
-    transform: translateY(-5px); /* Allinea verticalmente con label */
+    transform: translateY(-5px); /* Allinea verticalmente con label (circa) */
 }
 
 
 /* Area Laterale Sinistra e Destra */
-.left-sidebar, .right-sidebar { grid-row: 2; background-color: #252525; border-radius: 4px; padding: 10px; display: flex; flex-direction: column; gap: 10px; width: 180px; border: 1px solid #444; overflow-y: auto; transition: box-shadow 0.3s ease, outline 0.3s ease; /* Aggiunta transizione per highlight */ }
+.left-sidebar, .right-sidebar { grid-row: 2; background-color: #252525; border-radius: 4px; padding: 10px; display: flex; flex-direction: column; gap: 10px; width: 180px; border: 1px solid #444; overflow-y: auto; transition: box-shadow 0.3s ease, outline 0.3s ease; }
 .left-sidebar { grid-column: 1; }
 .right-sidebar { grid-column: 3; }
 .left-sidebar.active-turn, .right-sidebar.active-turn { outline: 3px solid gold; box-shadow: 0 0 15px gold; }
@@ -97,7 +100,7 @@ html, body { margin: 0; padding: 0; height: 100%; width: 100%; font-family: sans
 .field { flex-grow: 1; background-color: rgba(10, 10, 10, 0.3); border-radius: 4px; border: 1px solid #777; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(6, 1fr); gap: 4px; padding: 4px; order: 2; overflow: hidden; }
 
 /* Celle Griglia */
-.grid-cell { border: 1px dashed #555; border-radius: 4px; min-height: 80px; display: flex; justify-content: center; align-items: center; position: relative; background-color: rgba(255, 255, 255, 0.02); transition: background-color 0.2s ease, border-color 0.2s ease; /* Transizione per hover/highlight */ }
+.grid-cell { border: 1px dashed #555; border-radius: 4px; min-height: 80px; display: flex; justify-content: center; align-items: center; position: relative; background-color: rgba(255, 255, 255, 0.02); transition: background-color 0.2s ease, border-color 0.2s ease; }
 .grid-cell[data-row="0"].initial-placement-g2, .grid-cell[data-row="5"].initial-placement-g1 { border-style: solid; border-color: #668; }
 .grid-cell.placement-valid { background-color: rgba(0, 255, 0, 0.1); border-style: solid; border-color: limegreen; cursor: pointer; }
 .grid-cell.placement-valid:hover { background-color: rgba(0, 255, 0, 0.2); }
@@ -106,7 +109,7 @@ html, body { margin: 0; padding: 0; height: 100%; width: 100%; font-family: sans
     background-color: rgba(0, 150, 255, 0.15); /* Blu chiaro */
     border-style: dashed;
     border-color: #0096FF;
-    cursor: pointer;
+    cursor: pointer; /* Indica che si può cliccare per muovere */
     box-shadow: inset 0 0 8px rgba(0, 150, 255, 0.5);
 }
 .grid-cell.movement-valid:hover {
@@ -135,7 +138,7 @@ html, body { margin: 0; padding: 0; height: 100%; width: 100%; font-family: sans
 
 
 /* --- Stili Carte --- */
-.card { background-color: #555; color: #fff; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; position: relative; overflow: hidden; transition: transform 0.1s ease-in-out, box-shadow 0.2s ease, outline 0.2s ease; /* Aggiunto outline transition */ }
+.card { background-color: #555; color: #fff; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; position: relative; overflow: hidden; transition: transform 0.1s ease-in-out, box-shadow 0.2s ease, outline 0.2s ease; }
 .card .card-name { font-weight: bold; }
 .card .card-cost { position: absolute; background-color: rgba(0, 0, 0, 0.7); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; }
 .card .card-stats { display: flex; justify-content: space-around; font-weight: bold; background-color: rgba(0, 0, 0, 0.7); border-radius: 5px; }
@@ -163,7 +166,7 @@ html, body { margin: 0; padding: 0; height: 100%; width: 100%; font-family: sans
 
 /* 3. Carte sulla Griglia */
 .card.on-grid { width: 95%; height: 95%; max-width: 90px; max-height: 130px; border: 1px solid #777; font-size: 0.6em; padding: 3px; border-radius: 4px; cursor: default; }
-.card.on-grid:hover { border-color: #ccc; box-shadow: 0 0 6px rgba(255, 255, 255, 0.4); transform: scale(1.02); z-index: 5; /* Porta leggermente avanti su hover */ }
+.card.on-grid:hover { border-color: #ccc; box-shadow: 0 0 6px rgba(255, 255, 255, 0.4); transform: scale(1.02); z-index: 5; }
 .card.on-grid .card-name { font-size: 0.9em; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
 .card.on-grid .card-cost { position: absolute; width: 16px; height: 16px; font-size: 0.8em; top: 2px; right: 2px; }
 .card.on-grid .card-art { position: absolute; top: 18px; bottom: 18px; left: 3px; right: 3px; }
@@ -171,12 +174,12 @@ html, body { margin: 0; padding: 0; height: 100%; width: 100%; font-family: sans
 .card.on-grid .card-stats { font-size: 0.9em; padding: 1px 2px; }
 .card.on-grid.player1-card { border-color: lightblue; }
 .card.on-grid.player2-card { border-color: lightcoral; }
-.card.on-grid.is-hero { border-width: 2px; /* Esempio */ }
+.card.on-grid.is-hero { border-width: 2px; }
 /* NUOVO: Stile carta selezionata per movimento */
 .card.on-grid.selected-for-move {
     outline: 3px solid cyan;
     box-shadow: 0 0 10px cyan;
-    cursor: grabbing; /* Cambia cursore */
+    cursor: grabbing !important; /* Forza cursore */
 }
 
 /* 4. Carte Terreno (Orizzontale) */
@@ -197,16 +200,14 @@ html, body { margin: 0; padding: 0; height: 100%; width: 100%; font-family: sans
 .modal-content { background-color: #2d2d2d; margin: auto; padding: 20px; border: 1px solid #888; border-radius: 5px; position: relative; color: #e0e0e0; width: 80%; max-height: 85vh; display: flex; flex-direction: column; }
 .modal-content .close-button { color: #aaa; position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; }
 .modal-content .close-button:hover, .modal-content .close-button:focus { color: #fff; text-decoration: none; }
-/* Modale Cimitero */
 #modal-body-graveyard { margin-top: 15px; max-height: calc(85vh - 70px); overflow-y: auto; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 #modal-body-graveyard .card.in-hand { width: 112px !important; height: 160px !important; font-size: 0.75em !important; cursor: default !important; border-color: #666 !important; transform: none !important; box-shadow: none !important;}
-/* Modale Log */
 #log-modal .modal-content { max-width: 800px; }
 #modal-body-log { margin-top: 15px; max-height: calc(85vh - 70px); overflow-y: scroll; background-color: #111; border: 1px solid #333; border-radius: 4px; padding: 10px; font-size: 0.9em; color: #bbb; line-height: 1.4; }
 #modal-body-log p { margin: 0 0 8px 0; padding: 0; border-bottom: 1px dotted #333; padding-bottom: 5px; }
 #modal-body-log p:last-child { border-bottom: none; }
 #modal-body-log p .log-timestamp { color: #888; margin-right: 5px; }
 
-/* Highlight Target (Obsoleto? Mantenuto per ora) */
+/* Highlight Target (Obsoleto ma mantenuto per ora) */
 .potential-target { outline: 3px solid yellow; box-shadow: 0 0 12px yellow; cursor: crosshair !important; }
 .potential-target:hover { background-color: rgba(255, 255, 0, 0.1); }

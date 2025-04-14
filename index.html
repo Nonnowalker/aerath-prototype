@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oathfall - Playtest</title> <!-- Nome aggiornato -->
+    <!-- Titolo aggiornato per Oathfall -->
+    <title>Oathfall - Playtest</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,12 +15,13 @@
         <!-- ==================== Barra Superiore ==================== -->
         <div class="top-bar">
             <div class="bar-controls-left bar-info" id="info-player-2-top">
+                <!-- Info G2 popolate da JS -->
                 <span>G2:</span>
                 <span>HP: <span id="hp-player-2">20</span></span>
-                <span>Eco: <span id="res-player-2">0</span>/<span id="max-res-player-2">0</span></span> <!-- Rinominato Risorse -->
+                <span>Eco: <span id="res-player-2">0</span>/<span id="max-res-player-2">0</span></span>
             </div>
             <div class="bar-controls-center">
-                 <!-- NUOVO: Indicatore di Fase -->
+                 <!-- Indicatore di Fase -->
                  <div class="phase-indicator-container">
                      <div class="phase-step" id="phase-acquisizione">
                          <div class="phase-icon">1</div>
@@ -36,12 +38,13 @@
                          <div class="phase-label">Scarto</div>
                      </div>
                  </div>
-                 <!-- Fine Indicatore di Fase -->
-                 <div class="turn-indicator-area" style="margin-left: 20px;"> <!-- Spazio aggiunto -->
-                    Turno: <span id="turn-indicator">1</span> (<span id="turn-player-indicator">G1</span>) <!-- Indicatore Giocatore -->
+                 <!-- Indicatore Turno -->
+                 <div class="turn-indicator-area" style="margin-left: 20px;">
+                    Turno: <span id="turn-indicator">1</span> (<span id="turn-player-indicator">G1</span>)
                  </div>
             </div>
             <div class="bar-controls-right">
+                 <!-- Area Terreno Attivo -->
                  <div class="game-element-display" id="active-terrain-display">
                     <h4>Terreno</h4>
                     <div class="card-display-area">
@@ -55,18 +58,21 @@
         <!-- ==================== Sidebar Sinistra (G2) ==================== -->
         <div class="left-sidebar" id="sidebar-player-2">
              <h4>Giocatore 2</h4>
+             <!-- Info Eroe G2 -->
              <div class="game-element-display" id="hero-display-player-2">
                  <h4>Eroe</h4>
                  <div class="card-display-area">
                     <span class="placeholder-text">(Nessun Eroe)</span>
                  </div>
              </div>
+              <!-- Info Obiettivo G2 (Nascosto) -->
              <div class="game-element-display" id="objective-display-player-2">
                 <h4>Obiettivo</h4>
                 <div class="card-display-area">
                     <div class="objective-hidden" title="Obiettivo Segreto Avversario">?</div>
                 </div>
             </div>
+             <!-- Info Mazzo/Cimitero G2 -->
              <div class="player-info-sidebar" id="details-player-2">
                  <div>Mazzo: <span id="deck-count-2">--</span></div>
              </div>
@@ -84,6 +90,7 @@
         <div class="center-game-area">
             <!-- Mano Giocatore 2 (Alto) -->
             <div class="hand-area" id="hand-area-player2">
+                <!-- Esempio placeholder, verranno popolati da JS -->
                 <div class="card-placeholder"></div>
                 <div class="card-placeholder"></div>
             </div>
@@ -95,25 +102,28 @@
 
             <!-- Mano Giocatore 1 (Basso) -->
             <div class="hand-area" id="hand-area-player1">
-                 <!-- Carte mano G1 -->
+                 <!-- Carte mano G1 verranno aggiunte da JS -->
             </div>
         </div>
 
         <!-- ==================== Sidebar Destra (G1) ==================== -->
         <div class="right-sidebar" id="sidebar-player-1">
              <h4>Giocatore 1</h4>
+              <!-- Info Eroe G1 -->
              <div class="game-element-display" id="hero-display-player-1">
                  <h4>Eroe</h4>
                  <div class="card-display-area">
                      <span class="placeholder-text">(Nessun Eroe)</span>
                  </div>
              </div>
+              <!-- Info Obiettivo G1 (Visibile solo a G1) -->
              <div class="game-element-display" id="objective-display-player-1">
                  <h4>Obiettivo</h4>
                  <div class="card-display-area">
                       <span class="placeholder-text">(Nessun Obiettivo)</span>
                  </div>
              </div>
+             <!-- Info Mazzo/Cimitero G1 -->
              <div class="player-info-sidebar" id="details-player-1">
                  <div>Mazzo: <span id="deck-count-1">--</span></div>
              </div>
@@ -132,22 +142,38 @@
             <div class="bar-controls-left bar-info" id="info-player-1-bottom">
                  <span>G1:</span>
                  <span>HP: <span id="hp-player-1">20</span></span>
-                 <span>Eco: <span id="res-player-1">0</span>/<span id="max-res-player-1">0</span></span> <!-- Rinominato Risorse -->
+                 <span>Eco: <span id="res-player-1">0</span>/<span id="max-res-player-1">0</span></span>
             </div>
             <div class="bar-controls-center">
                 <!-- Vuoto -->
             </div>
             <div class="bar-controls-right">
-                 <button id="end-turn-button" title="Termina Fase Azione (Spazio)">Passa a Scarto</button> <!-- Testo bottone aggiornato -->
+                 <button id="end-turn-button" title="Termina Fase Azione (Spazio)">Passa a Scarto</button>
             </div>
         </div>
 
     </div> <!-- Fine game-layout-container -->
 
 
-    <!-- ==================== Modali ==================== -->
-    <div id="graveyard-modal" class="modal"> <div class="modal-content"> <span class="close-button" data-modal-id="graveyard-modal">×</span> <h3 id="modal-title-graveyard">Cimitero</h3> <div id="modal-body-graveyard"></div> </div> </div>
-    <div id="log-modal" class="modal"> <div class="modal-content"> <span class="close-button" data-modal-id="log-modal">×</span> <h3 id="modal-title-log">Log di Gioco</h3> <div id="modal-body-log"></div> </div> </div>
+    <!-- ==================== Modali (fuori dal layout principale) ==================== -->
+    <div id="graveyard-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" data-modal-id="graveyard-modal">×</span>
+            <h3 id="modal-title-graveyard">Cimitero</h3>
+            <div id="modal-body-graveyard">
+                <!-- Contenuto del modale cimitero -->
+            </div>
+        </div>
+    </div>
+    <div id="log-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" data-modal-id="log-modal">×</span>
+            <h3 id="modal-title-log">Log di Gioco</h3>
+            <div id="modal-body-log">
+                <!-- Messaggi di log -->
+            </div>
+        </div>
+    </div>
 
     <!-- ==================== Script JS ==================== -->
     <script src="cards.js"></script>
