@@ -1,143 +1,268 @@
 /* Reset base e stile generale */
-html, body { margin: 0; padding: 0; height: 100%; width: 100%; font-family: sans-serif; background-color: #1a1a1a; color: #e0e0e0; overflow: hidden; }
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    font-family: sans-serif;
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+    overflow: hidden; /* Impedisce scroll principale */
+}
 
-/* Struttura Layout Principale (CSS Grid) */
-.game-layout-container { display: grid; grid-template-rows: auto 1fr auto; grid-template-columns: auto 1fr auto; height: 100vh; width: 100vw; background-color: #222; gap: 5px; padding: 5px; box-sizing: border-box; }
+/* NUOVO: Struttura Layout Principale (2 Colonne - Flexbox) */
+.game-layout-container {
+    display: flex; /* Usa Flexbox per le 2 colonne principali */
+    height: 100vh;
+    width: 100vw;
+    background-color: #222;
+    padding: 10px; /* Padding intorno a tutto */
+    box-sizing: border-box;
+    gap: 10px; /* Spazio tra colonna griglia e colonna info */
+}
 
-/* Barre Superiore e Inferiore */
-.top-bar, .bottom-bar { grid-column: 1 / 4; background-color: #2a2a2a; padding: 5px 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; min-height: 45px; border: 1px solid #444; }
-.top-bar { grid-row: 1; }
-.bottom-bar { grid-row: 3; }
-
-/* Controlli dentro le barre */
-.bar-controls-left, .bar-controls-center, .bar-controls-right { display: flex; align-items: center; gap: 15px; font-size: 0.9em; }
-.bar-controls-center { flex-grow: 1; justify-content: center; }
-.bar-controls-right { justify-content: flex-end; }
-.bar-info span { background-color: #333; padding: 2px 5px; border-radius: 3px; color: #bbb; }
-#show-log-button { padding: 5px 10px; font-size: 0.8em; cursor: pointer; background-color: #444; color: #ddd; border: 1px solid #666; border-radius: 4px; transition: background-color 0.2s ease; }
-#show-log-button:hover { background-color: #555; }
-#end-turn-button { padding: 8px 15px; font-size: 1em; cursor: pointer; background-color: #555; color: #fff; border: 1px solid #777; border-radius: 4px; transition: background-color 0.2s ease; }
-#end-turn-button:hover { background-color: #666; }
-#end-turn-button:disabled { background-color: #333; color: #777; cursor: not-allowed; opacity: 0.6; }
-
-
-/* NUOVO: Stili Indicatore Fase */
-.phase-indicator-container {
-    display: flex;
+/* Colonna Sinistra (Griglia) */
+.grid-column {
+    flex-grow: 1; /* Occupa la maggior parte dello spazio disponibile */
+    height: 100%; /* Altezza piena */
+    display: flex; /* Per centrare field se necessario */
+    justify-content: center;
     align-items: center;
-    background-color: rgba(0, 0, 0, 0.2);
-    padding: 3px 10px;
+    overflow: hidden; /* Nasconde overflow se griglia è più grande */
+}
+
+/* Colonna Destra (Info, Mani, Controlli) */
+.info-column {
+    flex-basis: 320px; /* Larghezza fissa per la colonna destra */
+    flex-shrink: 0; /* Non farla restringere */
+    height: 100%;
+    display: flex;
+    flex-direction: column; /* Impila elementi verticalmente */
+    background-color: #252525;
+    border-radius: 5px;
+    padding: 10px;
+    box-sizing: border-box;
+    border: 1px solid #444;
+    overflow-y: auto; /* Permette scroll verticale se contenuto eccede */
+}
+
+
+/* Elementi nella Colonna Destra */
+
+/* Bottone Log e Terreno in alto */
+.info-column .top-elements {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; /* Allinea in alto */
+    margin-bottom: 15px;
+    gap: 10px;
+}
+#show-log-button { /* Stile bottone mantenuto */
+    padding: 8px 12px; font-size: 0.9em; cursor: pointer; background-color: #444; color: #ddd; border: 1px solid #666; border-radius: 4px; transition: background-color 0.2s ease; flex-shrink: 0; /* Non farlo restringere */
+}
+#show-log-button:hover { background-color: #555; }
+
+/* Contenitore Terreno */
+#active-terrain-display {
+    flex-grow: 1; /* Occupa spazio rimanente */
+    min-width: 200px; /* Larghezza minima */
+    /* Stili .game-element-display applicati */
+    background-color: rgba(100, 100, 120, 0.1); padding: 8px; border-radius: 4px; border: 1px solid #4a4a6a; text-align: center;
+}
+#active-terrain-display h4 { margin: 0 0 5px 0; font-size: 0.7em; color: #888; text-transform: uppercase; }
+#active-terrain-display .card-display-area { min-height: 80px; display: flex; justify-content: center; align-items: center; }
+
+
+/* Area Info/Controlli Giocatori (Divisa in due blocchi G2 e G1) */
+.player-info-controls {
+    background-color: rgba(0, 0, 0, 0.15);
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+.player-info-controls h4 { /* Nome Giocatore */
+    margin: 0 0 8px 0;
+    font-size: 1em;
+    color: #ddd;
+    text-align: center;
+    border-bottom: 1px solid #555;
+    padding-bottom: 5px;
+}
+
+/* Contatore Eco (Flex per testo e pallini) */
+.eco-counter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    background-color: #3a3a3a;
+    padding: 4px 8px;
     border-radius: 15px; /* Arrotondato */
 }
-.phase-step {
-    display: flex;
-    flex-direction: column; /* Icona sopra, label sotto */
-    align-items: center;
-    text-align: center;
-    padding: 2px 8px;
+.eco-counter span { font-size: 0.9em; font-weight: bold; color: #eee; }
+.eco-dots { display: flex; gap: 3px; }
+.eco-dot { width: 12px; height: 12px; border-radius: 50%; background-color: #555; /* Grigio spento */ border: 1px solid #777; }
+.eco-dot.active { background-color: #66ccff; /* Blu Eco attivo */ border-color: #99e0ff; box-shadow: 0 0 3px #66ccff; }
+.eco-dot.max { background-color: #444; border-color: #666; /* Pallino per eco massimo ma non disponibile */ }
+
+
+/* Griglia Info Giocatore (Obiettivo, Cimitero, Mazzo, Fasi) */
+.player-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Due colonne */
+    grid-template-rows: auto auto; /* Due righe */
+    gap: 8px;
+    margin-bottom: 10px;
+}
+/* Stile elementi griglia info */
+.info-box {
+    background-color: #2f2f2f;
     border-radius: 4px;
-    cursor: default; /* Di base non cliccabile */
-    transition: background-color 0.2s ease, color 0.2s ease, opacity 0.3s ease;
-    opacity: 0.5; /* Fase non attiva è semi-trasparente */
-    border: 1px solid transparent; /* Bordo placeholder */
+    padding: 8px;
+    text-align: center;
+    font-size: 0.8em;
+    min-height: 50px; /* Altezza minima box */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #444;
+    position: relative; /* Per eventuali overlay o indicatori */
 }
-.phase-step.active-phase { /* Stile fase attiva */
-    opacity: 1.0;
-    background-color: #4CAF50; /* Verde */
-    color: white;
+.info-box h5 { /* Titolo (Obiettivo, Cimitero...) */
+    margin: 0 0 4px 0;
+    font-size: 0.8em;
+    color: #aaa;
+    text-transform: uppercase;
+}
+.info-box .info-value { /* Valore (Contatore, Icona...) */
+    font-size: 1.2em;
     font-weight: bold;
-    border-color: #388E3C;
+    color: #fff;
+    line-height: 1.2;
 }
-.phase-step.clickable { /* Classe aggiunta da JS se cliccabile */
-    cursor: pointer;
+/* Stile specifico Obiettivo */
+.info-box#objective-display-player-1 .card-display-area,
+.info-box#objective-display-player-2 .card-display-area {
+    min-height: 0; /* Sovrascrive min-height */
+    margin-top: 5px;
 }
-.phase-step.clickable:hover { /* Hover solo se cliccabile */
-     background-color: #66BB6A;
-     opacity: 0.9; /* Leggermente meno opaco su hover */
+.objective-hidden { width: 60px; height: 40px; background-color: #333; border: 1px dashed #777; border-radius: 3px; display: flex; justify-content: center; align-items: center; font-size: 1.5em; color: #888; cursor: default; }
+.objective-card-display { /* Contenitore per la carta obiettivo visibile */
+     width: 70px; /* Adatta dimensioni */
+     height: 95px;
 }
-.phase-step .phase-icon {
+
+/* Stile Indicatore Fasi (ora dentro info-box) */
+.phase-indicator {
+    display: flex;
+    justify-content: space-around; /* Spazia le fasi */
+    align-items: center;
+    width: 100%;
+    margin-top: 5px;
+}
+.phase-indicator .phase-step { /* Riadattato per box più piccolo */
+    padding: 2px 4px;
+    opacity: 0.4;
+    cursor: default;
+    border: none; /* Rimuovi bordo di default qui */
+}
+.phase-indicator .phase-step.active-phase {
+     opacity: 1.0;
+     color: #4CAF50; /* Evidenzia solo testo/icona? */
+     background-color: transparent; /* No sfondo colorato */
+     font-weight: bold;
+}
+.phase-indicator .phase-step.clickable {
+     cursor: pointer;
+     opacity: 0.7; /* Opacità media se cliccabile ma non attivo */
+}
+.phase-indicator .phase-step.clickable:hover {
+     opacity: 1.0;
+     color: #66BB6A;
+}
+.phase-indicator .phase-icon { display: none; /* Nascondi icone numeriche per ora */ }
+.phase-indicator .phase-label { font-size: 0.75em; }
+/* Rimuovi connettori */
+.phase-indicator .phase-connector { display: none; }
+
+
+/* Zona Cimitero e Mazzo */
+.deck-graveyard-display { /* Contenitore per Cimitero/Mazzo cliccabili */
+     display: flex;
+     justify-content: space-around;
+     gap: 8px;
+     margin-top: 5px;
+}
+.deck, .graveyard { /* Stili ridotti per adattarsi alla griglia info */
+    width: 48%; /* Quasi metà del box */
+    height: 60px;
     font-size: 0.7em;
+    border: 1px solid #555;
+    border-radius: 4px;
+    /* ... altri stili comuni ... */
+    background-color: #3a3a3a; color: #ccc; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; cursor: pointer; transition: background-color 0.2s ease, border-color 0.2s ease, opacity 0.3s ease;
+}
+.deck span, .graveyard span { /* Contatore */
+    font-size: 1.4em;
     font-weight: bold;
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    width: 18px;
-    height: 18px;
-    line-height: 18px; /* Centra verticalmente */
-    margin-bottom: 2px;
+    display: block;
 }
-.phase-step.active-phase .phase-icon {
-    background-color: white;
-    color: #4CAF50;
-}
-.phase-step .phase-label {
-    font-size: 0.7em;
-    line-height: 1;
-}
-.phase-connector {
-    width: 20px; /* Lunghezza linea */
-    height: 2px; /* Spessore linea */
-    background-color: #555; /* Colore linea */
-    margin: 0 5px; /* Spazio intorno alla linea */
-    transform: translateY(-5px); /* Allinea verticalmente con label (circa) */
-}
-
-
-/* Area Laterale Sinistra e Destra */
-.left-sidebar, .right-sidebar { grid-row: 2; background-color: #252525; border-radius: 4px; padding: 10px; display: flex; flex-direction: column; gap: 10px; width: 180px; border: 1px solid #444; overflow-y: auto; transition: box-shadow 0.3s ease, outline 0.3s ease; }
-.left-sidebar { grid-column: 1; }
-.right-sidebar { grid-column: 3; }
-.left-sidebar.active-turn, .right-sidebar.active-turn { outline: 3px solid gold; box-shadow: 0 0 15px gold; }
-
-/* Area di Gioco Centrale */
-.center-game-area { grid-row: 2; grid-column: 2; background-color: #1f1f1f; border-radius: 4px; padding: 10px; display: flex; flex-direction: column; gap: 10px; border: 1px solid #444; overflow: hidden; }
-
-/* Aree Mano */
-.hand-area { background-color: rgba(0, 0, 0, 0.3); border-radius: 4px; padding: 5px; height: 180px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; overflow-x: auto; overflow-y: hidden; }
-#hand-area-player1 { order: 3; }
-#hand-area-player2 { order: 1; }
-
-/* Griglia 6x6 centrale */
-.field { flex-grow: 1; background-color: rgba(10, 10, 10, 0.3); border-radius: 4px; border: 1px solid #777; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(6, 1fr); gap: 4px; padding: 4px; order: 2; overflow: hidden; }
-
-/* Celle Griglia */
-.grid-cell { border: 1px dashed #555; border-radius: 4px; min-height: 80px; display: flex; justify-content: center; align-items: center; position: relative; background-color: rgba(255, 255, 255, 0.02); transition: background-color 0.2s ease, border-color 0.2s ease; }
-.grid-cell[data-row="0"].initial-placement-g2, .grid-cell[data-row="5"].initial-placement-g1 { border-style: solid; border-color: #668; }
-.grid-cell.placement-valid { background-color: rgba(0, 255, 0, 0.1); border-style: solid; border-color: limegreen; cursor: pointer; }
-.grid-cell.placement-valid:hover { background-color: rgba(0, 255, 0, 0.2); }
-/* NUOVO: Stile cella valida per movimento */
-.grid-cell.movement-valid {
-    background-color: rgba(0, 150, 255, 0.15); /* Blu chiaro */
-    border-style: dashed;
-    border-color: #0096FF;
-    cursor: pointer; /* Indica che si può cliccare per muovere */
-    box-shadow: inset 0 0 8px rgba(0, 150, 255, 0.5);
-}
-.grid-cell.movement-valid:hover {
-    background-color: rgba(0, 150, 255, 0.3);
-}
-
-
-/* Info Giocatori (Sidebar) */
-.player-info-sidebar { background-color: rgba(255, 255, 255, 0.05); padding: 8px; border-radius: 4px; border: 1px solid #555; margin-bottom: 5px; }
-.player-info-sidebar h4 { margin: 0 0 5px 0; font-size: 0.9em; color: #ccc; border-bottom: 1px solid #444; padding-bottom: 3px; }
-.player-info-sidebar div { font-size: 0.85em; margin-bottom: 3px; color: #bbb; }
-.player-info-sidebar div span { font-weight: bold; color: #fff; }
-
-/* Contenitore Eroe, Terreno, Obiettivo */
-.game-element-display { background-color: rgba(100, 100, 120, 0.1); padding: 8px; border-radius: 4px; border: 1px solid #4a4a6a; text-align: center; }
-.game-element-display h4 { margin: 0 0 5px 0; font-size: 0.8em; color: #aaa; text-transform: uppercase; }
-.game-element-display .card-display-area { min-height: 100px; display: flex; justify-content: center; align-items: center; }
-.game-element-display .objective-hidden { width: 100px; height: 60px; background-color: #333; border: 2px dashed #777; border-radius: 5px; display: flex; justify-content: center; align-items: center; font-size: 0.8em; color: #888; cursor: default; }
-
-/* Deck/Cimitero (Sidebar) */
-.deck-graveyard-sidebar { display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
-.deck, .graveyard { width: 100%; height: 100px; border: 2px solid #666; font-size: 0.8em; border-radius: 5px; background-color: #3a3a3a; color: #ccc; display: flex; justify-content: center; align-items: center; text-align: center; cursor: pointer; transition: background-color 0.2s ease, border-color 0.2s ease, opacity 0.3s ease; }
 .deck:hover, .graveyard:hover { background-color: #4a4a4a; border-color: #999; }
 .deck.deck-inactive, .graveyard.graveyard-inactive { cursor: default; opacity: 0.6; }
 .deck.deck-inactive:hover, .graveyard.graveyard-inactive:hover { background-color: #3a3a3a; border-color: #666; }
 
 
+/* Indicatore Turno Centrale */
+.turn-indicator-center {
+    text-align: center;
+    font-size: 1.1em;
+    color: #ccc;
+    margin: 10px 0;
+    padding: 5px 0;
+    border-top: 1px solid #555;
+    border-bottom: 1px solid #555;
+}
+
+
+/* Area Mano G1 (in fondo colonna dx) */
+.hand-area#hand-area-player1 {
+    margin-top: auto; /* Spinge in fondo */
+    height: 180px; /* Altezza fissa come richiesto */
+    flex-shrink: 0;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    padding: 5px;
+    display: flex;
+    align-items: center; /* Centra verticalmente */
+    justify-content: center; /* Centra orizzontalmente se poche carte */
+    gap: 8px;
+    overflow-x: auto; /* Scroll orizzontale se necessario */
+    overflow-y: hidden;
+}
+
+
+/* Griglia 6x6 */
+.field {
+    flex-grow: 1; /* Occupa spazio centrale verticale */
+    background-color: rgba(10, 10, 10, 0.3); border-radius: 4px; border: 1px solid #777;
+    display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(6, 1fr);
+    gap: 4px; padding: 4px; overflow: hidden;
+}
+/* Celle Griglia */
+.grid-cell { border: 1px dashed #555; border-radius: 4px; min-height: 80px; display: flex; justify-content: center; align-items: center; position: relative; background-color: rgba(255, 255, 255, 0.02); transition: background-color 0.2s ease, border-color 0.2s ease; }
+.grid-cell[data-row="0"].initial-placement-g2, .grid-cell[data-row="5"].initial-placement-g1 { border-style: solid; border-color: #668; }
+.grid-cell.placement-valid { background-color: rgba(0, 255, 0, 0.1); border-style: solid; border-color: limegreen; cursor: pointer; }
+.grid-cell.placement-valid:hover { background-color: rgba(0, 255, 0, 0.2); }
+.grid-cell.movement-valid { background-color: rgba(0, 150, 255, 0.15); border-style: dashed; border-color: #0096FF; cursor: pointer; box-shadow: inset 0 0 8px rgba(0, 150, 255, 0.5); }
+.grid-cell.movement-valid:hover { background-color: rgba(0, 150, 255, 0.3); }
+
+
 /* --- Stili Carte --- */
+/* (Mantenuti stili per .card.in-hand e .card.on-grid come prima) */
+/* ... Stili .card, .in-hand, .on-grid, .terrain-card, ecc. ... */
+/* Assicurati che le classi .player1-card, .player2-card, .is-hero, .selected-for-move siano definite */
 .card { background-color: #555; color: #fff; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; position: relative; overflow: hidden; transition: transform 0.1s ease-in-out, box-shadow 0.2s ease, outline 0.2s ease; }
 .card .card-name { font-weight: bold; }
 .card .card-cost { position: absolute; background-color: rgba(0, 0, 0, 0.7); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; }
@@ -145,17 +270,6 @@ html, body { margin: 0; padding: 0; height: 100%; width: 100%; font-family: sans
 .card .card-art { background-size: cover; background-position: center; border-radius: 3px; }
 .card .card-art.card-art-fallback { background-image: none !important; background-color: #666; display: flex; align-items: center; justify-content: center; text-align: center; color: #ccc; padding: 5px; font-size: 0.8em; }
 .card-hp-display { position: absolute; bottom: 2px; left: 3px; background-color: rgba(200, 0, 0, 0.8); color: white; font-size: 0.8em; padding: 0px 3px; border-radius: 2px; font-weight: bold; }
-
-/* 1. Carte Grandi (non usate attivamente) */
-.card.large-size { width: 210px; height: 300px; border: 2px solid #888; font-size: 1em; padding: 8px; border-radius: 10px; cursor: pointer; }
-.card.large-size:hover { border-color: #eee; box-shadow: 0 0 12px rgba(255, 255, 255, 0.6); transform: scale(1.03); }
-.card.large-size .card-name { font-size: 1.1em; white-space: normal; margin-bottom: 5px; }
-.card.large-size .card-cost { top: 8px; right: 8px; width: 30px; height: 30px; font-size: 1.1em; border: 1px solid #ccc; }
-.card.large-size .card-stats { font-size: 1.2em; padding: 4px 8px; margin-top: 5px; }
-.card.large-size .card-art { position: absolute; top: 45px; left: 8px; right: 8px; bottom: 45px; }
-.card.large-size .card-art.card-art-fallback { font-size: 0.9em; }
-
-/* 2. Carte nella Mano */
 .card.in-hand { width: 112px; height: 160px; border: 1px solid #999; font-size: 0.75em; padding: 5px; border-radius: 7px; cursor: pointer; flex-shrink: 0; }
 .card.in-hand:hover { border-color: #fff; box-shadow: 0 0 10px rgba(255, 255, 255, 0.5); transform: scale(1.05) translateY(-5px); z-index: 10; }
 .card.in-hand .card-name { font-size: 1em; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -163,8 +277,6 @@ html, body { margin: 0; padding: 0; height: 100%; width: 100%; font-family: sans
 .card.in-hand .card-art { position: absolute; top: 25px; bottom: 25px; left: 5px; right: 5px; }
 .card.in-hand .card-art.card-art-fallback { font-size: 0.8em; }
 .card.in-hand .card-stats { font-size: 0.9em; padding: 2px 3px; }
-
-/* 3. Carte sulla Griglia */
 .card.on-grid { width: 95%; height: 95%; max-width: 90px; max-height: 130px; border: 1px solid #777; font-size: 0.6em; padding: 3px; border-radius: 4px; cursor: default; }
 .card.on-grid:hover { border-color: #ccc; box-shadow: 0 0 6px rgba(255, 255, 255, 0.4); transform: scale(1.02); z-index: 5; }
 .card.on-grid .card-name { font-size: 0.9em; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
@@ -175,26 +287,17 @@ html, body { margin: 0; padding: 0; height: 100%; width: 100%; font-family: sans
 .card.on-grid.player1-card { border-color: lightblue; }
 .card.on-grid.player2-card { border-color: lightcoral; }
 .card.on-grid.is-hero { border-width: 2px; }
-/* NUOVO: Stile carta selezionata per movimento */
-.card.on-grid.selected-for-move {
-    outline: 3px solid cyan;
-    box-shadow: 0 0 10px cyan;
-    cursor: grabbing !important; /* Forza cursore */
-}
-
-/* 4. Carte Terreno (Orizzontale) */
+.card.on-grid.selected-for-move { outline: 3px solid cyan; box-shadow: 0 0 10px cyan; cursor: grabbing !important; }
 .card.terrain-card { width: 220px; height: 150px; border: 1px solid #8b7355; font-size: 0.8em; padding: 6px; border-radius: 8px; cursor: default; }
 .card.terrain-card:hover { transform: none; box-shadow: 0 0 8px #8b7355; }
 .card.terrain-card .card-name { font-size: 1.1em; }
 .card.terrain-card .card-cost { display: none; }
 .card.terrain-card .card-art { position: absolute; top: 25px; left: 6px; right: 6px; bottom: 6px; border-radius: 4px; }
 .card.terrain-card .card-stats { display: none; }
-
-
-/* Placeholder mano avversario */
 .card-placeholder { width: 112px; height: 160px; background-color: #404040; border: 1px dashed #888; border-radius: 7px; cursor: default; flex-shrink: 0; }
 
 /* Modali */
+/* ... come prima ... */
 .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0, 0, 0, 0.7); justify-content: center; align-items: center; }
 .modal.active { display: flex; }
 .modal-content { background-color: #2d2d2d; margin: auto; padding: 20px; border: 1px solid #888; border-radius: 5px; position: relative; color: #e0e0e0; width: 80%; max-height: 85vh; display: flex; flex-direction: column; }
@@ -208,6 +311,6 @@ html, body { margin: 0; padding: 0; height: 100%; width: 100%; font-family: sans
 #modal-body-log p:last-child { border-bottom: none; }
 #modal-body-log p .log-timestamp { color: #888; margin-right: 5px; }
 
-/* Highlight Target (Obsoleto ma mantenuto per ora) */
+/* Highlight Target (Obsoleto ma mantenuto) */
 .potential-target { outline: 3px solid yellow; box-shadow: 0 0 12px yellow; cursor: crosshair !important; }
 .potential-target:hover { background-color: rgba(255, 255, 0, 0.1); }
