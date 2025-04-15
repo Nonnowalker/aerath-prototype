@@ -107,7 +107,82 @@ function renderPlayerInfo(playerId) {
     if (deckEl) deckEl.title = `Mazzo G${playerId} (${playerState.deck.length})`;
     if (graveyardCountEl) graveyardCountEl.textContent = playerState.graveyard.length;
 }
-function renderGameInfo() { if (activeTerrainDisplayArea) { activeTerrainDisplayArea.innerHTML = ''; if (gameState.activeTerrainId) { const terrainCardData = getCardData(gameState.activeTerrainId); if (terrainCardData) { const terrainCardElement = renderCard(gameState.activeTerrainId, 'terrain'); activeTerrainDisplayArea.appendChild(terrainCardElement); } else { activeTerrainDisplayArea.innerHTML = '<span class="placeholder-text">(Errore Terreno)</span>'; } } else { activeTerrainDisplayArea.innerHTML = '<span class="placeholder-text">(Nessun Terreno)</span>'; } } gameState.players.forEach(player => { const heroDisplay = (player.id === 1) ? heroDisplayP1 : heroDisplayP2; const objectiveDisplay = (player.id === 1) ? objectiveDisplayP1 : null; if (heroDisplay) { heroDisplay.innerHTML = ''; if (player.heroId) { const heroCardData = getCardData(player.heroId); if (heroCardData) { const heroInstance = player.field.find(e => e.cardId === player.heroId && e.isHero); const heroCardElement = renderCard(player.heroId, 'hero-display', heroInstance?.instanceId); heroDisplay.appendChild(heroCardElement); heroDisplay.title = `${heroCardData.nome} (Eroe)`; } else { heroDisplay.innerHTML = '<span class="placeholder-text">(Errore Eroe)</span>'; } } else { heroDisplay.innerHTML = '<span class="placeholder-text">(Nessun Eroe)</span>'; } } if (objectiveDisplay && player.id === 1) { objectiveDisplay.innerHTML = ''; if (player.objectiveId) { const objectiveCardData = getCardData(player.objectiveId); if (objectiveCardData) { const objectiveCardElement = renderCard(player.objectiveId, 'objective-display'); objectiveDisplay.appendChild(objectiveCardElement); objectiveDisplay.title = `${objectiveCardData.nome} (Obiettivo)`; } else { objectiveDisplay.innerHTML = '<span class="placeholder-text">(Errore Obiettivo)</span>'; } } else { objectiveDisplay.innerHTML = '<span class="placeholder-text">(Nessun Obiettivo)</span>'; } } }); }
+function renderGameInfo() {
+    /* Render Terreno */
+    if (activeTerrainDisplayArea) {
+        activeTerrainDisplayArea.innerHTML = ''; /* Pulisci */
+        if (gameState.activeTerrainId) {
+            const terrainCardData = getCardData(gameState.activeTerrainId);
+            if (terrainCardData && terrainCardData.id !== 'unknown') { /* Controlla se non è la carta default di errore */
+                const terrainCardElement = renderCard(gameState.activeTerrainId, 'terrain');
+                /* NUOVO CONTROLLO */
+                if (terrainCardElement instanceof Node) {
+                     activeTerrainDisplayArea.appendChild(terrainCardElement);
+                } else {
+                     console.error("renderCard per Terreno non ha restituito un Nodo valido:", terrainCardElement);
+                     activeTerrainDisplayArea.innerHTML = '<span class="placeholder-text">(Errore Render Terreno)</span>';
+                }
+            } else {
+                activeTerrainDisplayArea.innerHTML = '<span class="placeholder-text">(Errore Dati Terreno)</span>';
+            }
+        } else {
+            activeTerrainDisplayArea.innerHTML = '<span class="placeholder-text">(Nessun Terreno)</span>';
+        }
+    }
+
+    /* Render Eroi e Obiettivo G1 */
+    gameState.players.forEach(player => {
+        const heroDisplay = (player.id === 1) ? heroDisplayP1 : heroDisplayP2;
+        const objectiveDisplay = (player.id === 1) ? objectiveDisplayP1 : null;
+
+        /* Render Eroe */
+        if (heroDisplay) {
+            heroDisplay.innerHTML = '';
+            if (player.heroId) {
+                const heroCardData = getCardData(player.heroId);
+                if (heroCardData && heroCardData.id !== 'unknown') {
+                    const heroInstance = player.field.find(e => e.cardId === player.heroId && e.isHero);
+                    const heroCardElement = renderCard(player.heroId, 'hero-display', heroInstance?.instanceId);
+                    /* NUOVO CONTROLLO */
+                    if (heroCardElement instanceof Node) {
+                        heroDisplay.appendChild(heroCardElement);
+                        heroDisplay.title = `${heroCardData.nome} (Eroe)`;
+                    } else {
+                         console.error("renderCard per Eroe G"+player.id+" non ha restituito un Nodo valido:", heroCardElement);
+                         heroDisplay.innerHTML = '<span class="placeholder-text">(Errore Render Eroe)</span>';
+                    }
+                } else {
+                     heroDisplay.innerHTML = '<span class="placeholder-text">(Errore Dati Eroe)</span>';
+                }
+            } else {
+                 heroDisplay.innerHTML = '<span class="placeholder-text">(Nessun Eroe)</span>';
+            }
+        }
+
+        /* Render Obiettivo G1 */
+        if (objectiveDisplay && player.id === 1) {
+             objectiveDisplay.innerHTML = '';
+             if (player.objectiveId) {
+                 const objectiveCardData = getCardData(player.objectiveId);
+                 if (objectiveCardData && objectiveCardData.id !== 'unknown') {
+                     const objectiveCardElement = renderCard(player.objectiveId, 'objective-display');
+                     /* NUOVO CONTROLLO */
+                     if (objectiveCardElement instanceof Node) {
+                         objectiveDisplay.appendChild(objectiveCardElement);
+                         objectiveDisplay.title = `${objectiveCardData.nome} (Obiettivo)`;
+                     } else {
+                          console.error("renderCard per Obiettivo G1 non ha restituito un Nodo valido:", objectiveCardElement);
+                          objectiveDisplay.innerHTML = '<span class="placeholder-text">(Errore Render Obiettivo)</span>';
+                     }
+                 } else {
+                    objectiveDisplay.innerHTML = '<span class="placeholder-text">(Errore Dati Obiettivo)</span>';
+                 }
+             } else {
+                 objectiveDisplay.innerHTML = '<span class="placeholder-text">(Nessun Obiettivo)</span>';
+             }
+        }
+    });
+}
 function renderGame() { renderPlayerInfo(1); renderPlayerInfo(2); renderGameInfo(); renderHand(1); renderField(); if(turnIndicator) turnIndicator.textContent = gameState.turnNumber; if(turnPlayerIndicator) turnPlayerIndicator.textContent = `G${gameState.currentPlayerId}`; const isPlayer1ActionPhase = gameState.currentPlayerId === 1 && (gameState.currentState === GameStateEnum.P1_ACTION || gameState.currentState === GameStateEnum.P1_ACTION_UNIT_SELECTED); if(endTurnButton) endTurnButton.disabled = gameState.gameEnded || !isPlayer1ActionPhase; if(showLogButton) showLogButton.disabled = gameState.gameEnded; if (phaseIndicatorP1 && phaseIndicatorP2) { let activePhaseKeyP1 = null; let activePhaseKeyP2 = null; if (gameState.currentState) { if (gameState.currentState.startsWith('P1_')) { activePhaseKeyP1 = gameState.currentState.split('_')[1].toLowerCase(); if (activePhaseKeyP1 === 'action' && gameState.currentState === GameStateEnum.P1_ACTION_UNIT_SELECTED) activePhaseKeyP1 = 'azione'; } else if (gameState.currentState.startsWith('P2_')) { activePhaseKeyP2 = gameState.currentState.split('_')[1].toLowerCase(); if (activePhaseKeyP2 === 'thinking') activePhaseKeyP2 = 'azione'; } } for (const phaseKey in phaseStepsP1) { if (phaseStepsP1[phaseKey]) { phaseStepsP1[phaseKey].classList.remove('active-phase', 'clickable'); if (phaseKey === activePhaseKeyP1 && gameState.currentState !== GameStateEnum.GAME_OVER) { phaseStepsP1[phaseKey].classList.add('active-phase'); } if (!gameState.gameEnded && gameState.currentPlayerId === 1) { if (phaseKey === 'azione' && gameState.currentState === GameStateEnum.P1_ACQUISITION) { phaseStepsP1[phaseKey].classList.add('clickable'); } else if (phaseKey === 'scarto' && (gameState.currentState === GameStateEnum.P1_ACTION || gameState.currentState === GameStateEnum.P1_ACTION_UNIT_SELECTED)) { phaseStepsP1[phaseKey].classList.add('clickable'); } } } } for (const phaseKey in phaseStepsP2) { if (phaseStepsP2[phaseKey]) { phaseStepsP2[phaseKey].classList.remove('active-phase', 'clickable'); if (phaseKey === activePhaseKeyP2 && gameState.currentState !== GameStateEnum.GAME_OVER) { phaseStepsP2[phaseKey].classList.add('active-phase'); } } } if (gameState.currentState === GameStateEnum.GAME_OVER) { Object.values(phaseStepsP1).forEach(el => el?.classList.remove('active-phase', 'clickable')); Object.values(phaseStepsP2).forEach(el => el?.classList.remove('active-phase', 'clickable')); if(phaseIndicatorP1) phaseIndicatorP1.style.opacity = '0.5'; if(phaseIndicatorP2) phaseIndicatorP2.style.opacity = '0.5'; } else { if(phaseIndicatorP1) phaseIndicatorP1.style.opacity = '1'; if(phaseIndicatorP2) phaseIndicatorP2.style.opacity = '1'; } } const infoAreaP1 = document.getElementById('player-1-info-area'); const infoAreaP2 = document.getElementById('player-2-info-area'); if (!gameState.gameEnded) { if (gameState.currentPlayerId === 1) { if(infoAreaP1) infoAreaP1.classList.add('active-turn'); if(infoAreaP2) infoAreaP2.classList.remove('active-turn'); if(deckP1Element) deckP1Element.classList.remove('deck-inactive'); } else { if(infoAreaP1) infoAreaP1.classList.remove('active-turn'); if(infoAreaP2) infoAreaP2.classList.add('active-turn'); if(deckP1Element) deckP1Element.classList.add('deck-inactive'); } } else { if(infoAreaP1) infoAreaP1.classList.remove('active-turn'); if(infoAreaP2) infoAreaP2.classList.remove('active-turn'); if(deckP1Element) deckP1Element.classList.add('deck-inactive'); if(deckP2Element) deckP2Element.classList.add('deck-inactive'); } }
 
 /* ==================== 6. State Machine: Transizioni e Azioni ==================== */
