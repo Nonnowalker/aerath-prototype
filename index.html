@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Oathfall - Playtest (Layout 2 Colonne)</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Oswald:wght@200..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.min.css">
 </head>
 <body>
 
@@ -52,16 +55,16 @@
                     <div class="info-box">
                         <h5>Fasi</h5>
                         <div class="phase-indicator" id="phase-indicator-2">
-                             <div class="phase-step" id="phase-acquisizione-2">ACQ</div>
-                             <div class="phase-step" id="phase-azione-2">AZN</div>
-                             <div class="phase-step" id="phase-scarto-2">SCA</div>
+                             <div class="phase-step" id="phase-acquisizione-2">Acquisizione</div>
+                             <div class="phase-step" id="phase-azione-2">Azione</div>
+                             <div class="phase-step" id="phase-scarto-2">Scarto</div>
                         </div>
                     </div>
                      <div class="info-box">
                         <h5>Cimitero</h5>
                         <div class="deck-graveyard-display">
                              <div class="graveyard" id="graveyard-player-2" data-player-id="2" title="Cimitero G2">
-                                 <span id="graveyard-count-2-display">0</span> Cimitero
+                                 <span id="graveyard-count-2-display">0</span>
                              </div>
                         </div>
                     </div>
@@ -69,7 +72,7 @@
                         <h5>Mazzo</h5>
                          <div class="deck-graveyard-display">
                              <div class="deck deck-inactive" id="deck-player-2" title="Mazzo G2">
-                                 <span id="deck-count-2-display">--</span> Mazzo
+                                 <span id="deck-count-2-display">--</span>
                              </div>
                          </div>
                     </div>
@@ -108,16 +111,17 @@
                     <div class="info-box">
                         <h5>Fasi</h5>
                         <div class="phase-indicator" id="phase-indicator-1">
-                             <div class="phase-step" id="phase-acquisizione">ACQ</div> <!-- Rimossi ID numerici -->
-                             <div class="phase-step" id="phase-azione">AZN</div>
-                             <div class="phase-step" id="phase-scarto">SCA</div>
+                             <div class="phase-step" id="phase-acquisizione">Acquisizione</div> <!-- Rimossi ID numerici -->
+                             <div class="phase-step" id="phase-azione">Azione</div>
+                             <div class="phase-step" id="phase-scarto">Scarto</div>
                         </div>
+                        <button id="end-turn-button" title="Passa (Spazio)">Passa</button>
                     </div>
                      <div class="info-box">
                         <h5>Cimitero</h5>
                         <div class="deck-graveyard-display">
                              <div class="graveyard" id="graveyard-player-1" data-player-id="1" title="Cimitero G1">
-                                <span id="graveyard-count-1-display">0</span> Cimitero
+                                <span id="graveyard-count-1-display">0</span>
                              </div>
                         </div>
                     </div>
@@ -125,22 +129,17 @@
                         <h5>Mazzo</h5>
                          <div class="deck-graveyard-display">
                             <div class="deck" id="deck-player-1" title="Mazzo G1">
-                                <span id="deck-count-1-display">--</span> Mazzo
+                                <span id="deck-count-1-display">--</span>
                              </div>
                          </div>
                     </div>
-                </div>
+                  </div>
+                  <!-- Area Mano G1 -->
+                 <div class="hand-area" id="hand-area-player1">
+                      <!-- Carte mano G1 generate da JS -->
+                 </div>
             </div>
 
-             <!-- Area Mano G1 -->
-            <div class="hand-area" id="hand-area-player1">
-                 <!-- Carte mano G1 generate da JS -->
-            </div>
-
-            <!-- Bottone Passa Fase/Turno (opzionale qui o altrove?) -->
-            <div class="bottom-controls" style="text-align: center; margin-top: 10px;"> <!-- Posizionamento temporaneo -->
-                 <button id="end-turn-button" title="Termina Fase Azione (Spazio)">Termina Fase Azione</button>
-            </div>
 
         </div> <!-- Fine info-column -->
 
